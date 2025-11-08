@@ -1,168 +1,76 @@
-<aside class="sidebar" id="sidebar">
-  <!-- Brand -->
-  <div class="brand text-center mb-4">
-    <h4><i class="bi bi-credit-card-2-front"></i> ZPay</h4>
-  </div>
-
-  <!-- ================== EASEBUZZ PROVIDER ================== -->
-  <div class="menu-section">
-    <button class="menu-header" onclick="toggleMenu('easebuzzMenu', this)" aria-expanded="false">
-      <i class="bi bi-lightning-charge-fill me-2"></i> Easebuzz
-      <i class="bi bi-chevron-right float-end arrow-icon"></i>
-    </button>
-
-    <div id="easebuzzMenu" class="submenu">
-
-      <!-- ================== MERCHANT ================== -->
-      <button class="menu-header nested" onclick="toggleMenu('merchantMenu', this)" aria-expanded="false">
-        <i class="bi bi-person-circle me-2"></i> Merchant
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
-      </button>
-      <div id="merchantMenu" class="submenu nested">
-        <a href="/easebuzz/merchant/add/"><i class="bi bi-person-plus me-2"></i> Add Merchant</a>
-        <a href="/easebuzz/merchant/view/"><i class="bi bi-eye me-2"></i> View Merchant</a>
-        <a href="/easebuzz/merchant/stats/"><i class="bi bi-graph-up me-2"></i> All Merchant Stats</a>
-        <a href="/easebuzz/merchant/service/"><i class="bi bi-briefcase me-2"></i> Merchant Service</a>
-        <a href="/easebuzz/merchant/session/"><i class="bi bi-laptop me-2"></i> Active Session</a>
-        <a href="/easebuzz/merchant/currency/"><i class="bi bi-currency-dollar me-2"></i> Active Currency</a>
-        <a href="/easebuzz/merchant/bulksheets/"><i class="bi bi-file-earmark-spreadsheet me-2"></i> All Bulk Sheets</a>
-      </div>
-
-      <!-- ================== PAYOUT ================== -->
-      <button class="menu-header nested" onclick="toggleMenu('payoutMenu', this)" aria-expanded="false">
-        <i class="bi bi-credit-card me-2"></i> Payout
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
-      </button>
-      <div id="payoutMenu" class="submenu nested">
-        <a href="/easebuzz/payout/dashboard/"><i class="bi bi-graph-up me-2"></i> Dashboard</a>
-        <a href="/easebuzz/payout/merchants/"><i class="bi bi-people-fill me-2"></i> Payout Merchants</a>
-        <a href="/easebuzz/payout/callback/"><i class="bi bi-arrow-repeat me-2"></i> Callback Details</a>
-        <a href="/easebuzz/payout/wallet/"><i class="bi bi-wallet2 me-2"></i> Wallet Requests</a>
-        <a href="/easebuzz/payout/ticket/"><i class="bi bi-ticket-detailed me-2"></i> Ticket Status</a>
-        <a href="/easebuzz/payout/currency/"><i class="bi bi-currency-dollar me-2"></i> Currency</a>
-
-        <!-- Payout Transaction -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutTxnMenu', this)" aria-expanded="false">
-          Transaction <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutTxnMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-cash me-2"></i> Payout Txn</a>
-          <a href="#"><i class="bi bi-clock-history me-2"></i> Request History</a>
-          <a href="#"><i class="bi bi-cash me-2"></i> Virtual Txn</a>
-          <a href="#"><i class="bi bi-file-earmark-bar-graph me-2"></i> Acquirer Report</a>
-        </div>
-
-        <!-- Payout Master Service -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutMasterMenu', this)" aria-expanded="false">
-          Master Service <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutMasterMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-person-plus me-2"></i> Add Account</a>
-          <a href="#"><i class="bi bi-bank me-2"></i> Activate Account</a>
-          <a href="#"><i class="bi bi-bank2 me-2"></i> Download Bank Statements</a>
-          <a href="#"><i class="bi bi-list-check me-2"></i> Bank Bal. List</a>
-        </div>
-
-        <!-- Payout Bulk Activities -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutBulkMenu', this)" aria-expanded="false">
-          Bulk Activities <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutBulkMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-arrow-repeat me-2"></i> Bulk Update</a>
-          <a href="#"><i class="bi bi-database me-2"></i> Txn Data</a>
-        </div>
-      </div>
-
-      <!-- ================== PAYIN ================== -->
-      <button class="menu-header nested" onclick="toggleMenu('payinMenu', this)" aria-expanded="false">
-        <i class="bi bi-wallet2 me-2"></i> Payin
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
-      </button>
-      <div id="payinMenu" class="submenu nested">
-        <a href="/easebuzz/payin/dashboard/"><i class="bi bi-graph-up me-2"></i> Dashboard</a>
-        <a href="/easebuzz/payin/method/"><i class="bi bi-grid-3x3-gap me-2"></i> Payin Method</a>
-        <a href="/easebuzz/payin/merchants/"><i class="bi bi-people-fill me-2"></i> Payin Merchants</a>
-        <a href="/easebuzz/payin/request/"><i class="bi bi-list-check me-2"></i> Payin Request</a>
-        <a href="/easebuzz/payin/routing/"><i class="bi bi-gear me-2"></i> Test Routing</a>
-        <a href="/easebuzz/payin/ticket/"><i class="bi bi-ticket-detailed me-2"></i> Ticket Status</a>
-        <a href="/easebuzz/payin/currency/"><i class="bi bi-currency-dollar me-2"></i> Currency</a>
-        <a href="/easebuzz/payin/callback_details/"><i class="bi bi-envelope me-2"></i> Callback Details</a>
-        <a href="/easebuzz/payin/callback_gen/"><i class="bi bi-envelope-open me-2"></i> Callback Gen.</a>
-
-        <!-- Payin Transaction -->
-        <button class="menu-header nested" onclick="toggleMenu('payinTxnMenu', this)" aria-expanded="false">
-          Transaction <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinTxnMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-cash me-2"></i> Payin Txn</a>
-          <a href="#"><i class="bi bi-x-circle me-2"></i> Dispute Txn</a>
-          <a href="#"><i class="bi bi-arrow-counterclockwise me-2"></i> ChargeBack Txn</a>
-          <a href="#"><i class="bi bi-flag me-2"></i> Flag Txn</a>
-          <a href="#"><i class="bi bi-cash me-2"></i> Virtual Txn</a>
-          <a href="#"><i class="bi bi-slash me-2"></i> Unmatched Txn</a>
-          <a href="#"><i class="bi bi-file-earmark-bar-graph me-2"></i> Acquirer Report</a>
-        </div>
-
-        <!-- Payin Fuse -->
-        <button class="menu-header nested" onclick="toggleMenu('payinFuseMenu', this)" aria-expanded="false">
-          Fuse <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinFuseMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-list me-2"></i> Fraud List</a>
-          <a href="#"><i class="bi bi-database me-2"></i> Fraud Upload</a>
-        </div>
-
-        <!-- Payin Master Service -->
-        <button class="menu-header nested" onclick="toggleMenu('payinMasterMenu', this)" aria-expanded="false">
-          Master Service <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinMasterMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-bank me-2"></i> Add Mid</a>
-          <a href="#"><i class="bi bi-check-circle me-2"></i> Activate Mid</a>
-          <a href="#"><i class="bi bi-equal me-2"></i> UPI Handler</a>
-          <a href="#"><i class="bi bi-columns-gap me-2"></i> Payin v Gateway</a>
-        </div>
-
-        <!-- Payin Bulk Activities -->
-        <button class="menu-header nested" onclick="toggleMenu('payinBulkMenu', this)" aria-expanded="false">
-          Bulk Activities <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinBulkMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Dispute Txn</a>
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Update Txn</a>
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Chargeback</a>
-          <a href="#"><i class="bi bi-bank me-2"></i> Get Bank Txn</a>
-          <a href="#"><i class="bi bi-clipboard-check me-2"></i> Get Payin Request</a>
-          <a href="#"><i class="bi bi-envelope me-2"></i> Resend Callback</a>
-          <a href="#"><i class="bi bi-arrow-right me-2"></i> Resend Bank Callback</a>
-        </div>
-      </div>
-
-      <!-- ================== PRODUCT ================== -->
-      <button class="menu-header nested" onclick="toggleMenu('productMenu', this)" aria-expanded="false">
-        <i class="bi bi-box-seam me-2"></i> Product
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
-      </button>
-      <div id="productMenu" class="submenu nested">
-        <a href="/easebuzz/product/edit/"><i class="bi bi-pencil-square me-2"></i> Edit Product</a>
-        <a href="/easebuzz/product/query/"><i class="bi bi-search me-2"></i> Query</a>
-        <a href="/easebuzz/product/transaction/"><i class="bi bi-cash me-2"></i> Transaction</a>
-      </div>
+<!-- Modern Blue Sidebar (3-level expandable) -->
+<nav class="sb">
+  <div class="sb__brand">
+    <div class="sb__logo">Z</div>
+    <div class="sb__title">
+      <strong>ZPay</strong>
+      <span>Control Center</span>
     </div>
   </div>
 
-  <!-- ================== FUTURE PROVIDERS ================== -->
-  {% for provider in providers %}
-  <div class="menu-section">
-    <button class="menu-header disabled">
-      <i class="bi bi-gear me-2"></i> {{ provider }}
-    </button>
-  </div>
-  {% endfor %}
+  <!-- Quick link example -->
+  <a class="sb__link" href="#"
+     >🏠 <span>Dashboard</span></a>
 
-  <!-- ================== FOOTER ================== -->
-  <div class="sidebar-footer mt-auto text-center small text-muted">
-    <hr>
-    <p class="mb-0">©2025 ZPay | Trusted Payment Partner</p>
+  <div class="sb__divider"></div>
+  <div class="sb__section-label">Navigation</div>
+
+  <!-- ============== Level 1 ============== -->
+  <button class="sb__btn" data-target="#grp1" aria-expanded="false">
+    ⚡ <span>Easebuzz</span>
+    <i class="sb__chev"></i>
+  </button>
+  <div id="grp1" class="sb__submenu">
+    <!-- ========== Level 2 ========== -->
+    <button class="sb__btn sb__btn--nested" data-target="#grp1A" aria-expanded="false">
+      👤 <span>Merchant</span>
+      <i class="sb__chev"></i>
+    </button>
+    <div id="grp1A" class="sb__submenu sb__submenu--nested">
+
+      <!-- ======= Level 3 ======= -->
+      <button class="sb__btn sb__btn--nested" data-target="#grp1A1" aria-expanded="false">
+        📂 <span>Inner A.1</span>
+        <i class="sb__chev"></i>
+      </button>
+      <div id="grp1A1" class="sb__submenu sb__submenu--nested">
+        <!-- Replace these <a> with your own; add hx-get later -->
+        <a class="sb__link" href="#">Item A.1.1</a>
+        <a class="sb__link" href="#">Item A.1.2</a>
+      </div>
+
+      <button class="sb__btn sb__btn--nested" data-target="#grp1A2" aria-expanded="false">
+        📂 <span>Inner A.2</span>
+        <i class="sb__chev"></i>
+      </button>
+      <div id="grp1A2" class="sb__submenu sb__submenu--nested">
+        <a class="sb__link" href="#">Item A.2.1</a>
+        <a class="sb__link" href="#">Item A.2.2</a>
+      </div>
+    </div>
+
+    <button class="sb__btn sb__btn--nested" data-target="#grp1B" aria-expanded="false">
+      💳 <span>Payout</span>
+      <i class="sb__chev"></i>
+    </button>
+    <div id="grp1B" class="sb__submenu sb__submenu--nested">
+      <a class="sb__link" href="#">Dashboard</a>
+      <a class="sb__link" href="#">Merchants</a>
+      <a class="sb__link" href="#">Callback</a>
+    </div>
   </div>
-</aside>
+
+  <!-- Another Level 1 -->
+  <button class="sb__btn" data-target="#grp2" aria-expanded="false">
+    📦 <span>Product</span>
+    <i class="sb__chev"></i>
+  </button>
+  <div id="grp2" class="sb__submenu">
+    <a class="sb__link" href="#">Edit Product</a>
+    <a class="sb__link" href="#">Query</a>
+    <a class="sb__link" href="#">Transactions</a>
+  </div>
+
+  <div class="sb__spacer"></div>
+  <div class="sb__footer">©2025 ZPay</div>
+</nav>
