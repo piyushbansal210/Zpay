@@ -1,159 +1,170 @@
-<aside class="sidebar" id="sidebar">
-  <!-- Brand -->
-  <div class="brand text-center mb-4">
-    <h4><i class="bi bi-credit-card-2-front"></i> ZPay</h4>
-  </div>
+<!-- Brand -->
+<div class="brand">
+  <i class="bi bi-credit-card-2-front"></i><span>ZPay</span>
+</div>
 
-  <!-- ============ EASEBUZZ (TOP-LEVEL ONLY) ============ -->
-  <div class="menu-section">
-    <button class="menu-header" onclick="toggleMenu('easebuzzMenu', this)" aria-expanded="false">
-      <i class="bi bi-lightning-charge-fill me-2"></i> Easebuzz
-      <i class="bi bi-chevron-right float-end arrow-icon"></i>
+<nav class="sb-nav">
+
+  <!-- =============== EASEBUZZ =============== -->
+  <button class="sb-btn" data-sb-toggle="#sb-easebuzz" aria-expanded="true">
+    <i class="bi bi-lightning-charge-fill"></i><span>Easebuzz</span>
+    <i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+
+  <div id="sb-easebuzz" class="sb-sub sb-group open">
+    <!-- Merchant -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-merchant" aria-expanded="false">
+      <i class="bi bi-person"></i><span>Merchant</span><i class="bi bi-chevron-right sb-arrow"></i>
     </button>
+    <div id="sb-eb-merchant" class="sb-sub">
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-person-plus"></i> Add Merchant</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-eye"></i> View Merchant</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-graph-up"></i> All Merchant Stats</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-briefcase"></i> Merchant Service</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-laptop"></i> Active Session</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-currency-dollar"></i> Active Currency</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-file-earmark-spreadsheet"></i> All Bulk Sheets</a>
+    </div>
 
-    <!-- Everything is INSIDE this submenu -->
-    <div id="easebuzzMenu" class="submenu">
-      <!-- ========== MERCHANT ========== -->
-      <button class="menu-header nested" onclick="toggleMenu('merchantMenu', this)" aria-expanded="false">
-        <i class="bi bi-person-circle me-2"></i> Merchant
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
+    <!-- Payout -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payout" aria-expanded="false">
+      <i class="bi bi-credit-card"></i><span>Payout</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-eb-payout" class="sb-sub sb-group">
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-graph-up"></i> Dashboard</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-people-fill"></i> Payout Merchants</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-arrow-repeat"></i> Callback Details</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-wallet2"></i> Wallet Requests</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-ticket-detailed"></i> Ticket Status</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-currency-dollar"></i> Currency</a>
+
+      <!-- Payout → Transaction -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payout-txn" aria-expanded="false">
+        <span>Transaction</span><i class="bi bi-chevron-right sb-arrow"></i>
       </button>
-      <div id="merchantMenu" class="submenu nested">
-        <a href="/easebuzz/merchant/add/"><i class="bi bi-person-plus me-2"></i> Add Merchant</a>
-        <a href="/easebuzz/merchant/view/"><i class="bi bi-eye me-2"></i> View Merchant</a>
-        <a href="/easebuzz/merchant/stats/"><i class="bi bi-graph-up me-2"></i> All Merchant Stats</a>
-        <a href="/easebuzz/merchant/service/"><i class="bi bi-briefcase me-2"></i> Merchant Service</a>
-        <a href="/easebuzz/merchant/session/"><i class="bi bi-laptop me-2"></i> Active Session</a>
-        <a href="/easebuzz/merchant/currency/"><i class="bi bi-currency-dollar me-2"></i> Active Currency</a>
-        <a href="/easebuzz/merchant/bulksheets/"><i class="bi bi-file-earmark-spreadsheet me-2"></i> All Bulk Sheets</a>
+      <div id="sb-eb-payout-txn" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash"></i> Payout Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-clock-history"></i> Request History</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash"></i> Virtual Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-file-earmark-bar-graph"></i> Acquirer Report</a>
       </div>
 
-      <!-- ========== PAYOUT ========== -->
-      <button class="menu-header nested" onclick="toggleMenu('payoutMenu', this)" aria-expanded="false">
-        <i class="bi bi-credit-card me-2"></i> Payout
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
+      <!-- Payout → Master Service -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payout-master" aria-expanded="false">
+        <span>Master Service</span><i class="bi bi-chevron-right sb-arrow"></i>
       </button>
-      <div id="payoutMenu" class="submenu nested">
-        <a href="/easebuzz/payout/dashboard/"><i class="bi bi-graph-up me-2"></i> Dashboard</a>
-        <a href="/easebuzz/payout/merchants/"><i class="bi bi-people-fill me-2"></i> Payout Merchants</a>
-        <a href="/easebuzz/payout/callback/"><i class="bi bi-arrow-repeat me-2"></i> Callback Details</a>
-        <a href="/easebuzz/payout/wallet/"><i class="bi bi-wallet2 me-2"></i> Wallet Requests</a>
-        <a href="/easebuzz/payout/ticket/"><i class="bi bi-ticket-detailed me-2"></i> Ticket Status</a>
-        <a href="/easebuzz/payout/currency/"><i class="bi bi-currency-dollar me-2"></i> Currency</a>
-
-        <!-- Payout → Transaction -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutTxnMenu', this)" aria-expanded="false">
-          Transaction <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutTxnMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-cash me-2"></i> Payout Txn</a>
-          <a href="#"><i class="bi bi-clock-history me-2"></i> Request History</a>
-          <a href="#"><i class="bi bi-cash me-2"></i> Virtual Txn</a>
-          <a href="#"><i class="bi bi-file-earmark-bar-graph me-2"></i> Acquirer Report</a>
-        </div>
-
-        <!-- Payout → Master Service -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutMasterMenu', this)" aria-expanded="false">
-          Master Service <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutMasterMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-person-plus me-2"></i> Add Account</a>
-          <a href="#"><i class="bi bi-bank me-2"></i> Activate Account</a>
-          <a href="#"><i class="bi bi-bank2 me-2"></i> Download Bank Statements</a>
-          <a href="#"><i class="bi bi-list-check me-2"></i> Bank Bal. List</a>
-        </div>
-
-        <!-- Payout → Bulk Activities -->
-        <button class="menu-header nested" onclick="toggleMenu('payoutBulkMenu', this)" aria-expanded="false">
-          Bulk Activities <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payoutBulkMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-arrow-repeat me-2"></i> Bulk Update</a>
-          <a href="#"><i class="bi bi-database me-2"></i> Txn Data</a>
-        </div>
+      <div id="sb-eb-payout-master" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-person-plus"></i> Add Account</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-bank"></i> Activate Account</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-bank2"></i> Download Bank Statements</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-list-check"></i> Bank Bal. List</a>
       </div>
 
-      <!-- ========== PAYIN ========== -->
-      <button class="menu-header nested" onclick="toggleMenu('payinMenu', this)" aria-expanded="false">
-        <i class="bi bi-wallet2 me-2"></i> Payin
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
+      <!-- Payout → Bulk Activities -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payout-bulk" aria-expanded="false">
+        <span>Bulk Activities</span><i class="bi bi-chevron-right sb-arrow"></i>
       </button>
-      <div id="payinMenu" class="submenu nested">
-        <a href="/easebuzz/payin/dashboard/"><i class="bi bi-graph-up me-2"></i> Dashboard</a>
-        <a href="/easebuzz/payin/method/"><i class="bi bi-grid-3x3-gap me-2"></i> Payin Method</a>
-        <a href="/easebuzz/payin/merchants/"><i class="bi bi-people-fill me-2"></i> Payin Merchants</a>
-        <a href="/easebuzz/payin/request/"><i class="bi bi-list-check me-2"></i> Payin Request</a>
-        <a href="/easebuzz/payin/routing/"><i class="bi bi-gear me-2"></i> Test Routing</a>
-        <a href="/easebuzz/payin/ticket/"><i class="bi bi-ticket-detailed me-2"></i> Ticket Status</a>
-        <a href="/easebuzz/payin/currency/"><i class="bi bi-currency-dollar me-2"></i> Currency</a>
-        <a href="/easebuzz/payin/callback_details/"><i class="bi bi-envelope me-2"></i> Callback Details</a>
-        <a href="/easebuzz/payin/callback_gen/"><i class="bi bi-envelope-open me-2"></i> Callback Gen.</a>
+      <div id="sb-eb-payout-bulk" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-arrow-repeat"></i> Bulk Update</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-database"></i> Txn Data</a>
+      </div>
+    </div>
 
-        <!-- Payin → Transaction -->
-        <button class="menu-header nested" onclick="toggleMenu('payinTxnMenu', this)" aria-expanded="false">
-          Transaction <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinTxnMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-cash me-2"></i> Payin Txn</a>
-          <a href="#"><i class="bi bi-x-circle me-2"></i> Dispute Txn</a>
-          <a href="#"><i class="bi bi-arrow-counterclockwise me-2"></i> ChargeBack Txn</a>
-          <a href="#"><i class="bi bi-flag me-2"></i> Flag Txn</a>
-          <a href="#"><i class="bi bi-cash me-2"></i> Virtual Txn</a>
-          <a href="#"><i class="bi bi-slash me-2"></i> Unmatched Txn</a>
-          <a href="#"><i class="bi bi-file-earmark-bar-graph me-2"></i> Acquirer Report</a>
-        </div>
+    <!-- Payin -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payin" aria-expanded="false">
+      <i class="bi bi-credit-card"></i><span>Payin</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-eb-payin" class="sb-sub sb-group">
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-graph-up"></i> Dashboard</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-grid-3x3-gap"></i> Payin Method</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-people-fill"></i> Payin Merchants</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-list-check"></i> Payin Request</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-gear"></i> Test Routing</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-ticket-detailed"></i> Ticket Status</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-currency-dollar"></i> Currency</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-envelope"></i> Callback Details</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-envelope-open"></i> Callback Gen.</a>
 
-        <!-- Payin → Fuse -->
-        <button class="menu-header nested" onclick="toggleMenu('payinFuseMenu', this)" aria-expanded="false">
-          Fuse <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinFuseMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-list me-2"></i> Fraud List</a>
-          <a href="#"><i class="bi bi-database me-2"></i> Fraud Upload</a>
-        </div>
-
-        <!-- Payin → Master Service -->
-        <button class="menu-header nested" onclick="toggleMenu('payinMasterMenu', this)" aria-expanded="false">
-          Master Service <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinMasterMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-bank me-2"></i> Add Mid</a>
-          <a href="#"><i class="bi bi-check-circle me-2"></i> Activate Mid</a>
-          <a href="#"><i class="bi bi-equal me-2"></i> UPI Handler</a>
-          <a href="#"><i class="bi bi-columns-gap me-2"></i> Payin v Gateway</a>
-        </div>
-
-        <!-- Payin → Bulk Activities -->
-        <button class="menu-header nested" onclick="toggleMenu('payinBulkMenu', this)" aria-expanded="false">
-          Bulk Activities <i class="bi bi-chevron-right float-end arrow-icon"></i>
-        </button>
-        <div id="payinBulkMenu" class="submenu nested">
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Dispute Txn</a>
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Update Txn</a>
-          <a href="#"><i class="bi bi-pencil-square me-2"></i> Bulk Chargeback</a>
-          <a href="#"><i class="bi bi-bank me-2"></i> Get Bank Txn</a>
-          <a href="#"><i class="bi bi-clipboard-check me-2"></i> Get Payin Request</a>
-          <a href="#"><i class="bi bi-envelope me-2"></i> Resend Callback</a>
-          <a href="#"><i class="bi bi-arrow-right me-2"></i> Resend Bank Callback</a>
-        </div>
+      <!-- Payin → Transaction -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payin-txn" aria-expanded="false">
+        <span>Transaction</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-eb-payin-txn" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash"></i> Payin Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-x-circle"></i> Dispute Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-arrow-counterclockwise"></i> ChargeBack Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-flag"></i> Flag Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash"></i> Virtual Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-slash"></i> Unmatched Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-file-earmark-bar-graph"></i> Acquirer Report</a>
       </div>
 
-      <!-- ========== PRODUCT ========== -->
-      <button class="menu-header nested" onclick="toggleMenu('productMenu', this)" aria-expanded="false">
-        <i class="bi bi-box-seam me-2"></i> Product
-        <i class="bi bi-chevron-right float-end arrow-icon"></i>
+      <!-- Payin → Fuse -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payin-fuse" aria-expanded="false">
+        <span>Fuse</span><i class="bi bi-chevron-right sb-arrow"></i>
       </button>
-      <div id="productMenu" class="submenu nested">
-        <a href="/easebuzz/product/edit/"><i class="bi bi-pencil-square me-2"></i> Edit Product</a>
-        <a href="/easebuzz/product/query/"><i class="bi bi-search me-2"></i> Query</a>
-        <a href="/easebuzz/product/transaction/"><i class="bi bi-cash me-2"></i> Transaction</a>
+      <div id="sb-eb-payin-fuse" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-list"></i> Fraud List</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-database"></i> Fraud Upload</a>
       </div>
+
+      <!-- Payin → Master Service -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payin-master" aria-expanded="false">
+        <span>Master Service</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-eb-payin-master" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-bank"></i> Add Mid</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-check-circle"></i> Activate Mid</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-equal"></i> UPI Handler</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-columns-gap"></i> Payin v Gateway</a>
+      </div>
+
+      <!-- Payin → Bulk Activities -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-payin-bulk" aria-expanded="false">
+        <span>Bulk Activities</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-eb-payin-bulk" class="sb-sub">
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Dispute Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Update Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Chargeback</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-bank"></i> Get Bank Txn</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-clipboard-check"></i> Get Payin Request</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-envelope"></i> Resend Callback</a>
+        <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-arrow-right"></i> Resend Bank Callback</a>
+      </div>
+    </div>
+
+    <!-- Product -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-eb-product" aria-expanded="false">
+      <i class="bi bi-box"></i><span>Product</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-eb-product" class="sb-sub">
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Edit Product</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-search"></i> Query</a>
+      <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash"></i> Transaction</a>
     </div>
   </div>
 
-  <!-- Footer -->
-  <div class="sidebar-footer mt-auto text-center small text-muted">
-    <hr>
-    <p class="mb-0">©2025 ZPay | Trusted Payment Partner</p>
-  </div>
-</aside>
+  <!-- =============== RAZORPAY (placeholder) =============== -->
+  <button class="sb-btn" data-sb-toggle="#sb-razorpay" aria-expanded="false">
+    <i class="bi bi-lightning"></i><span>Razorpay</span><i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+  <!-- <div id="sb-razorpay" class="sb-sub">
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-people"></i> Merchants</a>
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash-stack"></i> Transactions</a>
+  </div> -->
+
+  <!-- =============== PAYU (placeholder) =============== -->
+  <button class="sb-btn" data-sb-toggle="#sb-payu" aria-expanded="false">
+    <i class="bi bi-credit-card-2-front"></i><span>PayU</span><i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+  <!-- <div id="sb-payu" class="sb-sub">
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-people"></i> Merchants</a>
+    <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-cash-stack"></i> Transactions</a>
+  </div> -->
+
+</nav>
+
+<footer class="sb-footer">© 2025 ZPay</footer>

@@ -13,28 +13,26 @@
 </head>
 <body>
   <div class="layout">
-    <aside class="sidebar">
+    <aside class="sb" id="sidebar">
       {% include "dashboard/sidebar.html" %}
     </aside>
+
     <main id="content" class="main">
-      {% block content %}
-      <div class="p-4 text-muted">Select a menu item…</div>
-      {% endblock %}
+      <header class="topbar">
+        <button class="ghost btn-toggle" id="sbToggle" aria-label="Toggle sidebar">
+          <i class="bi bi-layout-sidebar-inset"></i>
+        </button>
+        <div class="topbar-title">ZPay Dashboard</div>
+        <div class="topbar-right">
+          <input class="form-control form-control-sm topbar-search" placeholder="Search…">
+          <div class="avatar">ZG</div>
+        </div>
+      </header>
+
+      <section class="page">
+        {% block content %}{% endblock %}
+      </section>
     </main>
   </div>
-
-  <!-- tiny inline fallback (works even if static JS/CSS fail) -->
-  <style>
-    .sidebar{position:fixed;inset:0 auto 0 0;width:260px;background:#eef4ff;border-right:1px solid #dbe2f0;overflow:auto;padding:16px;z-index:1030}
-    .main{margin-left:260px;min-height:100vh;background:#f9fbfe}
-  </style>
-  <script>
-    document.addEventListener('click',e=>{
-      const b=e.target.closest('.menu-header'); if(!b) return;
-      e.preventDefault();
-      const sel=b.getAttribute('data-target'); const sub=sel?document.querySelector(sel):b.nextElementSibling;
-      if(!sub) return; const open=sub.classList.toggle('open'); b.setAttribute('aria-expanded', String(open));
-    });
-  </script>
 </body>
 </html>

@@ -1,15 +1,22 @@
-// Smooth expandable nested menus (any depth)
 document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.sb__btn');
+  const btn = e.target.closest('[data-sb-toggle]');
   if (!btn) return;
 
-  e.preventDefault();
-
-  const selector = btn.getAttribute('data-target');
-  const panel = selector ? document.querySelector(selector) : btn.nextElementSibling;
+  const sel = btn.getAttribute('data-sb-toggle');
+  const panel = document.querySelector(sel);
   if (!panel) return;
 
-  const willOpen = !panel.classList.contains('open');
-  panel.classList.toggle('open', willOpen);
-  btn.setAttribute('aria-expanded', String(willOpen));
+  const group = btn.closest('.sb-group') || document;
+  const open = !panel.classList.contains('open');
+
+  // Close siblings within the same group only
+  group.querySelectorAll('.sb-sub').forEach(s => { if (s !== panel) s.classList.remove('open'); });
+  group.querySelectorAll('[data-sb-toggle][aria-expanded]').forEach(b => { if (b !== btn) b.setAttribute('aria-expanded','false'); });
+
+  panel.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', String(open));
+});
+
+document.getElementById('sbToggle')?.addEventListener('click', () => {
+  document.body.classList.toggle('sb-collapsed');
 });
