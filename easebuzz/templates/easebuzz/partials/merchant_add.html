@@ -1,8 +1,128 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
+<div class="p-4">
+  <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body">
-      <h4 class="mb-3">Merchant — Add</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/merchant/add/</code>. Replace with your actual UI.</p>
+      <h4 class="fw-semibold mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-person-plus text-primary"></i>
+        Add New Merchant
+      </h4>
+
+      <!-- ================= FORM ================= -->
+      <form id="merchantForm" class="needs-validation" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Merchant Name</label>
+            <input type="text" name="merchant_name" class="form-control" placeholder="ABC Retail Pvt Ltd" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Email</label>
+            <input type="email" name="email" class="form-control" placeholder="merchant@example.com" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Phone</label>
+            <input type="text" name="phone" class="form-control" placeholder="9876543210" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Business Type</label>
+            <input type="text" name="business_type" class="form-control" placeholder="E-commerce / Services" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-medium">PAN</label>
+            <input type="text" name="pan" class="form-control" placeholder="ABCDE1234F" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">GSTIN</label>
+            <input type="text" name="gstin" class="form-control" placeholder="29ABCDE1234F1Z5">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label fw-medium">Address</label>
+            <input type="text" name="address" class="form-control" placeholder="123 MG Road, Bangalore" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-medium">City</label>
+            <input type="text" name="city" class="form-control" placeholder="Bangalore" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-medium">State</label>
+            <input type="text" name="state" class="form-control" placeholder="Karnataka" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-medium">Pincode</label>
+            <input type="text" name="pincode" class="form-control" placeholder="560001" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Bank Name</label>
+            <input type="text" name="bank_name" class="form-control" placeholder="HDFC Bank" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Account Number</label>
+            <input type="text" name="account_no" class="form-control" placeholder="50123456789" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">IFSC Code</label>
+            <input type="text" name="ifsc_code" class="form-control" placeholder="HDFC0000123" required>
+          </div>
+        </div>
+
+        <div class="text-end mt-4">
+          <button type="submit" class="btn btn-primary px-4 rounded-3">
+            <i class="bi bi-cloud-upload"></i> Add Merchant
+          </button>
+        </div>
+      </form>
+
+      <!-- ================= ALERT ================= -->
+      <div id="responseMessage" class="alert mt-4 d-none"></div>
     </div>
   </div>
 </div>
+
+<script>
+document.getElementById("merchantForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = Object.fromEntries(new FormData(form));
+  const alertBox = document.getElementById("responseMessage");
+  alertBox.classList.add("d-none");
+
+  try {
+    const res = await fetch("/api/add-merchant/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+    alertBox.classList.remove("d-none", "alert-danger");
+    alertBox.classList.add("alert-success");
+    alertBox.textContent = "✅ Merchant added successfully!";
+    form.reset();
+  } catch (err) {
+    alertBox.classList.remove("d-none", "alert-success");
+    alertBox.classList.add("alert-danger");
+    alertBox.textContent = "❌ Error adding merchant.";
+  }
+});
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>

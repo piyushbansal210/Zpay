@@ -14,6 +14,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'dashboard',
     'easebuzz',
+    'drf_yasg',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

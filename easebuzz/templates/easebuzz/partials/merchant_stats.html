@@ -1,8 +1,164 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
+<div class="container-fluid p-3">
+  <!-- ================= HEADER ================= -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h4 class="fw-semibold mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-graph-up text-primary"></i> Merchant Stats
+    </h4>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <label class="small text-muted">From:</label>
+      <input type="date" id="fromDate" class="form-control form-control-sm" style="width: 150px;">
+      <label class="small text-muted">To:</label>
+      <input type="date" id="toDate" class="form-control form-control-sm" style="width: 150px;">
+      <button class="btn btn-outline-primary btn-sm" id="refreshStats">
+        <i class="bi bi-arrow-repeat"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= LOADING ================= -->
+  <div id="loadingStats" class="text-center py-4 d-none">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted small">Fetching latest merchant stats...</p>
+  </div>
+
+  <!-- ================= STATS CARDS ================= -->
+  <div id="statsSummary" class="row g-3 mb-4"></div>
+
+  <!-- ================= TABLE ================= -->
+  <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body">
-      <h4 class="mb-3">Merchant — Stats</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/merchant/stats/</code>. Replace with your actual UI.</p>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-semibold mb-0">Merchant-wise Details</h5>
+        <small class="text-muted" id="statsPeriod"></small>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Merchant Name</th>
+              <th>Merchant Key</th>
+              <th class="text-end">Payin Value</th>
+              <th class="text-end">Payin Count</th>
+              <th class="text-end">Payout Value</th>
+              <th class="text-end">Payout Count</th>
+              <th class="text-center">Currency</th>
+            </tr>
+          </thead>
+          <tbody id="merchantTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+function initMerchantStatsPage() {
+  const fromInput = document.getElementById("fromDate");
+  const toInput = document.getElementById("toDate");
+  const refreshButton = document.getElementById("refreshStats");
+  const summary = document.getElementById("statsSummary");
+  const tableBody = document.getElementById("merchantTableBody");
+  const loading = document.getElementById("loadingStats");
+  const statsPeriod = document.getElementById("statsPeriod");
+
+  if (!fromInput || !toInput || !refreshButton) return;
+
+  // Default 30 days
+  const today = new Date();
+  const priorDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  toInput.value = today.toISOString().split("T")[0];
+  fromInput.value = priorDate.toISOString().split("T")[0];
+
+  async function loadStats() {
+    const fromDate = fromInput.value;
+    const toDate = toInput.value;
+    summary.innerHTML = "";
+    tableBody.innerHTML = "";
+    statsPeriod.textContent = "";
+    loading.classList.remove("d-none");
+
+    try {
+      const res = await fetch(`/api/merchant-stats/?from_date=${fromDate}&to_date=${toDate}`);
+      const data = await res.json();
+      loading.classList.add("d-none");
+
+      if (!res.ok || !data.data) {
+        summary.innerHTML = `<div class="alert alert-danger">❌ Failed to load merchant stats.</div>`;
+        return;
+      }
+
+      const merchants = data.data;
+      const totalMerchants = merchants.length;
+      const totalPayin = merchants.reduce((sum, m) => sum + (parseFloat(m.value_payin) || 0), 0);
+      const totalPayout = merchants.reduce((sum, m) => sum + (parseFloat(m.value_payout) || 0), 0);
+      const totalPayinCount = merchants.reduce((sum, m) => sum + (parseInt(m.num_payin) || 0), 0);
+      const totalPayoutCount = merchants.reduce((sum, m) => sum + (parseInt(m.num_payout) || 0), 0);
+
+      statsPeriod.textContent = `Showing data from ${data.from_date} to ${data.to_date}`;
+
+      // Summary
+      summary.innerHTML = `
+        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+          <i class="bi bi-people-fill fs-3 text-primary"></i>
+          <h6 class="fw-semibold mt-2 mb-0">Total Merchants</h6>
+          <h4 class="fw-bold text-primary">${totalMerchants}</h4>
+        </div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+          <i class="bi bi-wallet2 fs-3 text-success"></i>
+          <h6 class="fw-semibold mt-2 mb-0">Total Payin</h6>
+          <h4 class="fw-bold text-success">₹${totalPayin.toLocaleString()}</h4>
+          <small class="text-muted">${totalPayinCount} transactions</small>
+        </div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+          <i class="bi bi-credit-card-2-front fs-3 text-warning"></i>
+          <h6 class="fw-semibold mt-2 mb-0">Total Payout</h6>
+          <h4 class="fw-bold text-warning">₹${totalPayout.toLocaleString()}</h4>
+          <small class="text-muted">${totalPayoutCount} transactions</small>
+        </div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+          <i class="bi bi-cash-stack fs-3 text-info"></i>
+          <h6 class="fw-semibold mt-2 mb-0">Net Flow</h6>
+          <h4 class="fw-bold text-info">₹${(totalPayin - totalPayout).toLocaleString()}</h4>
+        </div></div>
+      `;
+
+      // Table
+      merchants.forEach((m, i) => {
+        tableBody.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${m.merchant_name || "-"}</td>
+            <td>${m.merchant_key || "-"}</td>
+            <td class="text-end">₹${m.value_payin || 0}</td>
+            <td class="text-end">${m.num_payin || 0}</td>
+            <td class="text-end">₹${m.value_payout || 0}</td>
+            <td class="text-end">${m.num_payout || 0}</td>
+            <td class="text-center">${m.currency || "INR"}</td>
+          </tr>`;
+      });
+    } catch (err) {
+      console.error(err);
+      loading.classList.add("d-none");
+      summary.innerHTML = `<div class="alert alert-danger">❌ Unable to fetch data.</div>`;
+    }
+  }
+
+  // Auto load immediately
+  loadStats();
+
+  // Manual refresh
+  refreshButton.addEventListener("click", loadStats);
+}
+
+// ✅ Handle direct loads (if user reloads page)
+document.addEventListener("DOMContentLoaded", initMerchantStatsPage);
+
+// ✅ Handle dynamic HTMX page loads
+document.body.addEventListener("htmx:afterSettle", (evt) => {
+  if (evt.detail.target && evt.detail.target.querySelector("#refreshStats")) {
+    // small delay to allow browser to render DOM before script runs
+    setTimeout(initMerchantStatsPage, 50);
+  }
+});
+</script>
