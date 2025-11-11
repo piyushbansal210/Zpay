@@ -84,23 +84,23 @@ def add_merchant(request):
 # LIST MERCHANTS
 # ==============================
 
-@api_view(["GET"])
-def list_merchants(request):
-    """
-    Fetch all merchants/sub-merchants onboarded under your Easebuzz partner account.
-    Uses GET with key/hash.
-    """
-    try:
-        payload = {
-            "key": EASEBUZZ_KEY,
-            "hash": simple_hash(EASEBUZZ_KEY, EASEBUZZ_SALT)
-        }
-        url = f"{EASEBUZZ_BASE_URL}/merchant_list"
-        result, status_code = make_request(url, payload, "GET")
-        return Response(result, status=status_code)
-    except Exception as e:
-        print("Error in list_merchants:", str(e))
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# @api_view(["GET"])
+# def list_merchants(request):
+#     """
+#     Fetch all merchants/sub-merchants onboarded under your Easebuzz partner account.
+#     Uses GET with key/hash.
+#     """
+#     try:
+#         payload = {
+#             "key": EASEBUZZ_KEY,
+#             "hash": simple_hash(EASEBUZZ_KEY, EASEBUZZ_SALT)
+#         }
+#         url = f"{EASEBUZZ_BASE_URL}/merchant_list"
+#         result, status_code = make_request(url, payload, "GET")
+#         return Response(result, status=status_code)
+#     except Exception as e:
+#         print("Error in list_merchants:", str(e))
+#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ==============================
 # UPDATE MERCHANT
@@ -254,3 +254,236 @@ def merchant_stats(request):
     except Exception as e:
         print("Error in merchant_stats:", str(e))
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+
+@api_view(["POST"])
+def merchant_services(request):
+    """
+    Fetch all active/inactive services (Auth, Payin, Payout, etc.)
+    for a given merchant from Easebuzz.
+    """
+    try:
+        merchant_key = request.data.get("sub_merchant_key")
+        if not merchant_key:
+            return Response({"error": "sub_merchant_key is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "sub_merchant_key": merchant_key,
+            "hash": simple_hash(EASEBUZZ_KEY, EASEBUZZ_SALT),
+        }
+
+        # ==============================
+        # Option A: Partner API (Recommended)
+        # ==============================
+        url = f"{EASEBUZZ_BASE_URL}/merchant_service_list"
+
+        # ==============================
+        # Option B: If A doesn't exist in your version
+        # Replace with the direct dashboard API:
+        # url = "https://dashboard.easebuzz.in/api/service/list"
+        # payload["merchant_email"] = request.data.get("merchant_email")
+        # ==============================
+
+        result, status_code = make_request(url, payload, "POST")
+
+        # Normalize data
+        if isinstance(result, dict) and result.get("status") in [1, "1", "success"]:
+            services = result.get("data", {}).get("services", [])
+            return Response({"merchant": merchant_key, "services": services}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"merchant": merchant_key, "error": result.get("message", "No data found")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    except Exception as e:
+        print("Error in merchant_services:", str(e))
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+import requests
+import hashlib
+
+
+@api_view(["GET"])
+def active_sessions(request):
+    """
+    Fetch active merchant sessions from Easebuzz.
+    """
+    try:
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": simple_hash(EASEBUZZ_KEY, EASEBUZZ_SALT),
+        }
+        url = f"{EASEBUZZ_BASE_URL}/merchant_active_session"
+        response = requests.post(url, data=payload, timeout=15)
+
+        if response.status_code == 200:
+            data = response.json()
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Failed to fetch sessions"}, status=response.status_code)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+import hashlib
+import requests
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+
+
+@api_view(["GET"])
+def active_currency(request):
+    """
+    Fetch all active currencies for your partner/merchant account from Easebuzz.
+    """
+    try:
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+        }
+
+        url = f"{EASEBUZZ_BASE_URL}/merchant_active_currency"
+        response = requests.post(url, data=payload, timeout=20)
+        data = response.json()
+
+        # API success
+        if isinstance(data, dict) and data.get("status") in [1, "1", "success"]:
+            return Response({"currencies": data.get("data", [])}, status=status.HTTP_200_OK)
+
+        # API fallback (no data)
+        return Response(
+            {"currencies": [], "message": data.get("message", "No active currencies found")},
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        print("Error in active_currency:", str(e))
+        return Response({"currencies": [], "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+import hashlib
+import requests
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+
+@api_view(["GET"])
+def all_bulk_sheets(request):
+    try:
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+        }
+
+        url = f"{EASEBUZZ_BASE_URL}/bulk_sheet_list"
+        response = requests.post(url, data=payload, timeout=25)
+        data = response.json()
+
+        if isinstance(data, dict) and data.get("status") in [1, "1", "success"]:
+            return Response({"sheets": data.get("data", [])}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"sheets": [], "message": data.get("message", "No bulk sheets found")},
+                status=status.HTTP_200_OK
+            )
+    except Exception as e:
+        print("Error in all_bulk_sheets:", str(e))
+        return Response({"sheets": [], "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+import hashlib
+import requests
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+@api_view(["GET"])
+def list_merchants(request):
+    """
+    Fetch all merchants from Easebuzz partner account
+    """
+    try:
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+        }
+
+        url = f"{EASEBUZZ_BASE_URL}/merchant_list"
+        response = requests.post(url, data=payload, timeout=20)
+        data = response.json()
+
+        if isinstance(data, dict) and data.get("status") in ["1", 1, "success"]:
+            merchants = data.get("data", [])
+            return Response({"merchants": merchants}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"merchants": [], "message": data.get("message", "No merchants found")},
+                status=status.HTTP_200_OK
+            )
+
+    except Exception as e:
+        print("Error fetching merchant list:", str(e))
+        return Response({"merchants": [], "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+import hashlib, requests
+from datetime import datetime, timedelta
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+def make_request(url, payload):
+    try:
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = requests.post(url, data=payload, headers=headers, timeout=20)
+        return response.json(), response.status_code
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+
+@api_view(["GET"])
+def payout_dashboard_stats(request):
+    try:
+        payload = {"key": EASEBUZZ_KEY, "hash": simple_hash(EASEBUZZ_KEY, EASEBUZZ_SALT)}
+        url = f"{EASEBUZZ_BASE_URL}/payout_overview"
+        data, code = make_request(url, payload)
+
+        # Simulated / fallback structure
+        fallback_summary = {
+            "pending": 0,
+            "initiated": 0,
+            "success": 0,
+            "failed": 0,
+            "refunded": 0,
+            "total": 0,
+        }
+
+        stats = {
+            "active_merchants": data.get("active_merchants", 0),
+            "wallet_balance": float(data.get("wallet_balance", 0)),
+            "routes": data.get("routes", []),
+            "graph": data.get("graph", []),
+            "summary": data.get("summary", fallback_summary),
+        }
+
+        return Response({"status": 1, "data": stats}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

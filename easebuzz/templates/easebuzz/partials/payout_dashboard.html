@@ -1,8 +1,239 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Payout — Dashboard</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/payout/dashboard/</code>. Replace with your actual UI.</p>
+{% load static %}
+<div class="container-fluid mt-3 px-3">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h4 class="fw-semibold mb-0 text-dark">💸 Payout Dashboard</h4>
+    <button id="refreshBtn" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- ===== SUMMARY CARDS ===== -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 text-center">
+        <div class="card-body py-3">
+          <h6 class="text-muted mb-1 small">Active Merchants</h6>
+          <h3 id="activeMerchants" class="fw-bold text-success">0</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 text-center">
+        <div class="card-body py-3">
+          <h6 class="text-muted mb-1 small">Total Payout Wallet Balance</h6>
+          <h3 id="walletBalance" class="fw-bold text-dark">₹0.00</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN GRID ===== -->
+  <div class="row g-3">
+
+    <!-- ==== LEFT PANEL ==== -->
+    <div class="col-lg-8 d-flex flex-column gap-3">
+
+      <!-- TOTAL PAYOUT REQUESTS -->
+      <div class="card border-0 shadow-sm rounded-3 flex-fill">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">Total Payout Requests</h6>
+          <canvas id="totalPayoutChart" height="130"></canvas>
+        </div>
+      </div>
+
+      <!-- MERCHANT TRANSACTIONS -->
+      <div class="card border-0 shadow-sm rounded-3 flex-fill">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-semibold mb-0">Merchant Transactions <i class="bi bi-check2-circle text-success"></i></h6>
+            <select id="filterSelect" class="form-select form-select-sm" style="width:120px;">
+              <option>Today</option>
+              <option>This Week</option>
+              <option>This Month</option>
+            </select>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="bg-light text-muted small border-bottom">
+                <tr>
+                  <th>Date</th>
+                  <th>Business</th>
+                  <th>Payout Amount</th>
+                </tr>
+              </thead>
+              <tbody id="merchantTxnBody">
+                <tr><td colspan="3" class="text-center text-muted py-3">Loading data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==== RIGHT PANEL ==== -->
+    <div class="col-lg-4 d-flex flex-column gap-3">
+
+      <!-- PAYOUT PROGRESS -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">Payout Progress</h6>
+          <div id="payoutProgress"></div>
+        </div>
+      </div>
+
+      <!-- BANK BALANCE -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-semibold mb-0">Bank Balance</h6>
+            <select class="form-select form-select-sm" style="width:100px;">
+              <option>ICICI</option>
+              <option>HDFC</option>
+            </select>
+          </div>
+          <h3 id="bankBalance" class="fw-bold text-dark">₹0</h3>
+          <p class="mb-0 text-muted small">Used Limit: <span id="usedLimit">0</span></p>
+          <p class="mb-0 text-muted small">Remaining: <span id="remainingLimit">0</span></p>
+          <div class="text-end mt-2"><a href="#" class="small text-decoration-none">View</a></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<!-- ===== STYLES ===== -->
+<style>
+body {
+  background-color: #f4fff2 !important;
+}
+.card {
+  border-radius: 12px;
+}
+.progress {
+  background-color: #f1f5f9;
+  border-radius: 8px;
+}
+.progress-bar {
+  border-radius: 8px;
+  transition: width 0.6s ease;
+}
+</style>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("%c💸 Payout Dashboard Loaded", "color:#16a34a;font-weight:bold;");
+
+  const activeMerchants = document.getElementById("activeMerchants");
+  const walletBalance = document.getElementById("walletBalance");
+  const payoutProgress = document.getElementById("payoutProgress");
+  const txnBody = document.getElementById("merchantTxnBody");
+  const totalChartCtx = document.getElementById("totalPayoutChart").getContext("2d");
+  const bankBalance = document.getElementById("bankBalance");
+  const usedLimit = document.getElementById("usedLimit");
+  const remainingLimit = document.getElementById("remainingLimit");
+
+  let totalPayoutChart;
+
+  // ===== Fetch Dashboard Data =====
+  function loadDashboard() {
+    fetch("/easebuzz/payout_dashboard/")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.status) throw new Error("Invalid Data");
+        const d = data.data;
+
+        activeMerchants.textContent = d.active_merchants;
+        walletBalance.textContent = `₹${d.wallet_balance.toLocaleString("en-IN")}`;
+
+        // ==== Payout Progress ====
+        const s = d.summary || {};
+        const total = s.total || 1;
+
+        const createRow = (label, color, value, amount) => {
+          const percent = ((value / total) * 100).toFixed(1);
+          return `
+            <div class="mb-2">
+              <div class="d-flex justify-content-between small">
+                <span>${label}</span><span>${percent}% — ₹${Number(amount || 0).toLocaleString("en-IN")}</span>
+              </div>
+              <div class="progress" style="height:6px;">
+                <div class="progress-bar ${color}" style="width:${percent}%"></div>
+              </div>
+            </div>`;
+        };
+
+        payoutProgress.innerHTML = `
+          ${createRow("Pending", "bg-warning", s.pending || 0, s.pending_amount || 0)}
+          ${createRow("Failed", "bg-danger", s.failed || 0, s.failed_amount || 0)}
+          ${createRow("Success", "bg-success", s.success || 0, s.success_amount || 0)}
+          ${createRow("Initiated", "bg-info", s.initiated || 0, s.initiated_amount || 0)}
+          ${createRow("Refunded", "bg-secondary", s.refunded || 0, s.refunded_amount || 0)}
+          ${createRow("Orders", "bg-success", s.total || 0, s.total_amount || 0)}
+        `;
+
+        // ==== Merchant Transactions ====
+        txnBody.innerHTML = "";
+        (d.transactions || []).forEach(t => {
+          txnBody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td>${t.date || "-"}</td>
+              <td>${t.business || "-"}</td>
+              <td>₹${Number(t.amount || 0).toLocaleString("en-IN")}</td>
+            </tr>
+          `);
+        });
+
+        if (!d.transactions?.length)
+          txnBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">No transactions found</td></tr>`;
+
+        // ==== Bank Balance ====
+        bankBalance.textContent = `₹${Number(d.bank_balance || 0).toLocaleString("en-IN")}`;
+        usedLimit.textContent = Number(d.used_limit || 0).toLocaleString("en-IN");
+        remainingLimit.textContent = Number(d.remaining_limit || 0).toLocaleString("en-IN");
+
+        // ==== Total Payout Requests Chart ====
+        const graph = d.graph || [];
+        const labels = graph.map(g => g.date);
+        const values = graph.map(g => g.amount);
+
+        if (totalPayoutChart) totalPayoutChart.destroy();
+        totalPayoutChart = new Chart(totalChartCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Total Payout Transactions",
+              data: values,
+              borderColor: "#16a34a",
+              backgroundColor: "rgba(22,163,74,0.1)",
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+            }],
+          },
+          options: {
+            scales: {
+              y: { beginAtZero: true },
+            },
+            plugins: { legend: { display: false } },
+          },
+        });
+      })
+      .catch(err => {
+        console.error("❌ Dashboard Error:", err);
+        txnBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-3">Error loading data</td></tr>`;
+      });
+  }
+
+  loadDashboard();
+  document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+});
+</script>

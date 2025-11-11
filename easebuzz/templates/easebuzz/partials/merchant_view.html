@@ -1,8 +1,142 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Merchant — View</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/merchant/view/</code>. Replace with your actual UI.</p>
+<div class="container-fluid mt-3 px-3">
+  <!-- ====== PAGE HEADER ====== -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h4 class="fw-semibold mb-0 text-dark">
+      🧑‍💼 View Merchant
+    </h4>
+    <div class="input-group" style="max-width:300px;">
+      <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+      <input id="searchBox" type="text" class="form-control form-control-sm rounded-pill"
+             placeholder="BName/Email/MobileNo" />
+    </div>
+  </div>
+
+  <!-- ====== CARD ====== -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-3">
+      <h6 class="fw-semibold text-dark mb-3">View Merchant</h6>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light text-muted small border-bottom">
+            <tr>
+              <th>Business Name</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Mobile No.</th>
+              <th>Created Date</th>
+              <th>Created By</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="merchantTableBody">
+            <!-- Merchants will load here -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- ====== STYLES ====== -->
+<style>
+  body { background-color: #f8f9fc !important; }
+  .icon-green { color: #16a34a; font-size: 1.1rem; }
+  .icon-red { color: #dc2626; font-size: 1.1rem; }
+
+  .table th {
+    font-weight: 600;
+  }
+
+  .table td {
+    color: #333;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 0;
+    color: #6b7280;
+  }
+
+  .empty-state i {
+    font-size: 2.5rem;
+    color: #9ca3af;
+  }
+</style>
+
+<!-- ====== SCRIPT ====== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("%c🧑‍💼 View Merchant Page Loaded", "color:#2563eb;font-weight:bold;");
+  const tableBody = document.getElementById("merchantTableBody");
+  const searchBox = document.getElementById("searchBox");
+  let allMerchants = [];
+
+  // Fetch all merchants
+  loadMerchants();
+
+  function loadMerchants() {
+    console.log("🔁 Fetching merchants from /easebuzz/list_merchants/");
+    fetch("/easebuzz/list_merchants/")
+      .then(res => res.json())
+      .then(data => {
+        console.log("✅ API Data:", data);
+        allMerchants = data.merchants || [];
+        renderMerchants(allMerchants);
+      })
+      .catch(error => {
+        console.error("❌ Error loading merchants:", error);
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-3">Error loading data</td></tr>`;
+      });
+  }
+
+  function renderMerchants(merchants) {
+    tableBody.innerHTML = "";
+
+    if (!merchants.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <div class="empty-state">
+              <i class="bi bi-person-x"></i>
+              <p class="fw-semibold mt-2 mb-2">No merchants found</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    merchants.forEach(m => {
+      const name = m.business_name || "—";
+      const fullName = m.name || "—";
+      const email = m.email || "—";
+      const mobile = m.phone || "—";
+      const created = m.created_date || "—";
+      const createdBy = m.created_by || "—";
+
+      tableBody.insertAdjacentHTML("beforeend", `
+        <tr class="border-bottom">
+          <td>${name}</td>
+          <td>${fullName}</td>
+          <td>${email}</td>
+          <td>${mobile}</td>
+          <td>${created}</td>
+          <td>${createdBy}</td>
+          <td><i class="bi bi-person icon-green"></i></td>
+        </tr>
+      `);
+    });
+  }
+
+  // Search functionality
+  searchBox.addEventListener("input", (e) => {
+    const term = e.target.value.toLowerCase();
+    const filtered = allMerchants.filter(m =>
+      (m.business_name || "").toLowerCase().includes(term) ||
+      (m.email || "").toLowerCase().includes(term) ||
+      (m.phone || "").includes(term)
+    );
+    renderMerchants(filtered);
+  });
+});
+</script>
