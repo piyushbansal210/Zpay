@@ -1,8 +1,122 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Payout — Currency</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/payout/currency/</code>. Replace with your actual UI.</p>
-    </div>
+
+<div class="container mt-4">
+  <!-- Breadcrumb -->
+  <h6 class="mb-3">
+    Master Bank / <span class="text-success fw-semibold">Currency</span>
+  </h6>
+
+  <!-- Main Card -->
+  <div class="card p-3 shadow-sm bg-white rounded">
+    <h6 class="fw-semibold mb-2">Currency</h6>
+
+    <!-- Table -->
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Currency Name</th>
+          <th>Symbol</th>
+          <th>Origin</th>
+          <th>Current Rate</th>
+          <th>Service Charge</th>
+          <th>Total Price</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="currencyTableBody">
+        <tr>
+          <td colspan="7" class="text-center text-muted">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
+
+<!-- ====================== SCRIPT ====================== -->
+<script>
+document.addEventListener("DOMContentLoaded", fetchCurrencies);
+
+function fetchCurrencies() {
+  const url = "/api/active_currency/";
+  const tbody = document.getElementById("currencyTableBody");
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      tbody.innerHTML = "";
+
+      if (data.currencies && data.currencies.length > 0) {
+        data.currencies.forEach(cur => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${cur.currency_name || '-'}</td>
+              <td>${cur.symbol || '-'}</td>
+              <td>${cur.origin || '-'}</td>
+              <td>${parseFloat(cur.current_rate || 0).toFixed(2)}</td>
+              <td>${parseFloat(cur.service_charge || 0).toFixed(2)}</td>
+              <td>${parseFloat(cur.total_price || 0).toFixed(2)}</td>
+              <td>
+                <button class="btn btn-success btn-sm" onclick="openEditModal('${cur.currency_name}', ${cur.current_rate}, ${cur.service_charge})">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </td>
+            </tr>`;
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No currencies found</td></tr>`;
+      }
+    })
+    .catch(err => {
+      console.error("Error loading currencies:", err);
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error fetching data</td></tr>`;
+    });
+}
+
+/* ===================== EDIT MODAL ===================== */
+function openEditModal(currency, rate, charge) {
+  const modal = document.createElement("div");
+  modal.classList.add("modal-backdrop");
+  modal.innerHTML = `
+    <div class="modal fade show" tabindex="-1" style="display:block; background-color:rgba(0,0,0,0.4)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-success text-white">
+            <h6 class="modal-title">Edit ${currency} Currency</h6>
+            <button type="button" class="btn-close" onclick="closeModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Current Rate</label>
+              <input type="number" id="editRate" class="form-control" value="${rate}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Service Charge</label>
+              <input type="number" id="editCharge" class="form-control" value="${charge}">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-success" onclick="saveCurrency('${currency}')">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function closeModal() {
+  const modal = document.querySelector(".modal-backdrop");
+  if (modal) modal.remove();
+}
+
+/* ===================== SAVE FUNCTION (placeholder) ===================== */
+function saveCurrency(currency) {
+  const rate = document.getElementById("editRate").value;
+  const charge = document.getElementById("editCharge").value;
+  console.log("Saving:", { currency, rate, charge });
+
+  alert(`Updated ${currency} → Rate: ${rate}, Service Charge: ${charge}`);
+  closeModal();
+  // Later: Implement POST/PATCH API to update currency
+}
+</script>

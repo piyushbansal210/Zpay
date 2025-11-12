@@ -14,4 +14,6 @@ urlpatterns = [
     path("payout_dashboard/", views.payout_dashboard_stats, name="payout_dashboard_stats"),
     path("easebuzz/payout_merchants/", views.payout_merchants_api, name="payout_merchants_api"),
     path("payout/callback_details/", views.get_payout_callback_details, name="payout-callback-details"),
+    path("payout/pending_wallet_requests/", views.pending_wallet_requests, name="pending-wallet-requests"),
+    path("payout/ticket_status/", views.get_ticket_status, name="payout-ticket-status"),
 ]

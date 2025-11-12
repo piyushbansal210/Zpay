@@ -4,7 +4,7 @@ from dashboard.utils import render_partial
 
 ALLOWED = {
     'merchant': ['add','view','stats','service','session','currency','bulksheets'],
-    'payout':   ['dashboard','merchants','callback','wallet','ticket','currency'],
+    'payout':   ['dashboard','merchants','callback','wallet','ticket','currency','payout_transaction'],
     'payin':    ['dashboard','method','merchants','request','routing','ticket','currency','callback_details','callback_gen'],
     'product':  ['edit','query','transaction'],
 }

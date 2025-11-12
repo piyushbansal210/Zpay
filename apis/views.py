@@ -588,3 +588,111 @@ def get_payout_callback_details(request):
     except Exception as e:
         print("❌ Error in get_payout_callback_details:", str(e))
         return Response({"status": 0, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def pending_wallet_requests(request):
+    """
+    Fetch all pending wallet top-up or payout requests from Easebuzz.
+    Optional search by UTR or business name: ?q=UTR123 / ?q=BusinessName
+    """
+    try:
+        query = request.GET.get("q", "").strip()
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+        }
+
+        url = f"{EASEBUZZ_BASE_URL}/payout_pending_wallet_request"  # adjust if endpoint differs
+        response = requests.post(url, data=payload, timeout=25)
+        data = response.json()
+
+        # Normalize data
+        if isinstance(data, dict) and data.get("status") in ["1", 1, "success"]:
+            requests_list = data.get("data", [])
+
+            # Optional filtering by UTR or business name
+            if query:
+                query_lower = query.lower()
+                requests_list = [
+                    r for r in requests_list
+                    if query_lower in str(r.get("utr", "")).lower()
+                    or query_lower in str(r.get("business_name", "")).lower()
+                ]
+
+            return Response(
+                {"status": 1, "requests": requests_list},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "status": 0,
+                "requests": [],
+                "message": data.get("message", "No pending requests found"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print("❌ Error in pending_wallet_requests:", e)
+        return Response(
+            {"status": 0, "error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def get_ticket_status(request):
+    """
+    Fetch payout ticket status (Pending or Closed) from Easebuzz.
+    Optional parameters:
+      - ?status=pending or closed
+      - ?q=PGREF123 / MerchantRef
+    """
+    try:
+        status_filter = request.GET.get("status", "pending").lower()
+        query = request.GET.get("q", "").strip()
+
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+            "ticket_status": "Closed" if status_filter == "closed" else "Pending",
+        }
+
+        url = f"{EASEBUZZ_BASE_URL}/payout_ticket_status"  # official Easebuzz partner API
+        response = requests.post(url, data=payload, timeout=25)
+        data = response.json()
+
+        if isinstance(data, dict) and data.get("status") in ["1", 1, "success"]:
+            tickets = data.get("data", [])
+
+            # Optional search filter
+            if query:
+                query_lower = query.lower()
+                tickets = [
+                    t for t in tickets
+                    if query_lower in str(t.get("pg_ref", "")).lower()
+                    or query_lower in str(t.get("merchant_ref", "")).lower()
+                ]
+
+            return Response(
+                {"status": 1, "tickets": tickets},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {
+                "status": 0,
+                "tickets": [],
+                "message": data.get("message", "No tickets found")
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        print("❌ Error in get_ticket_status:", e)
+        return Response(
+            {"status": 0, "error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

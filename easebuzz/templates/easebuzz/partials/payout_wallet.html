@@ -1,8 +1,101 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Payout — Wallet</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/payout/wallet/</code>. Replace with your actual UI.</p>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h5 class="fw-semibold text-dark mb-0">Pending Wallet Requests</h5>
+    <div class="d-flex">
+      <input id="searchInput" type="text" class="form-control form-control-sm" placeholder="🔍 UTR / BusinessName" />
     </div>
   </div>
+
+  <div class="card p-3 shadow-sm bg-white rounded">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Created Date and Time</th>
+          <th>Transfer Date</th>
+          <th>Request Id</th>
+          <th>Business Name</th>
+          <th>UTR</th>
+          <th>Payment Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="walletRequestsTable">
+        <tr>
+          <td colspan="9" class="text-center text-muted">No entries available.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-center mt-3">
+    <nav>
+      <ul class="pagination pagination-sm">
+        <li class="page-item disabled"><a class="page-link">&lt;</a></li>
+        <li class="page-item active"><a class="page-link">1</a></li>
+        <li class="page-item disabled"><a class="page-link">&gt;</a></li>
+      </ul>
+    </nav>
+  </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", fetchWalletRequests);
+document.getElementById("searchInput").addEventListener("keyup", function(e) {
+  if (e.key === "Enter") fetchWalletRequests();
+});
+
+function fetchWalletRequests() {
+  const query = document.getElementById("searchInput").value.trim();
+  const url = `/api/payout/pending_wallet_requests/?q=${encodeURIComponent(query)}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("walletRequestsTable");
+      tbody.innerHTML = "";
+
+      if (data.status === 1 && data.requests.length > 0) {
+        data.requests.forEach(r => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${r.created_datetime || '-'}</td>
+              <td>${r.transfer_date || '-'}</td>
+              <td>${r.request_id || '-'}</td>
+              <td>${r.business_name || '-'}</td>
+              <td>${r.utr || '-'}</td>
+              <td>${r.payment_type || '-'}</td>
+              <td>${r.amount || '-'}</td>
+              <td>
+                <span class="badge bg-${getStatusColor(r.status)}">${r.status || '-'}</span>
+              </td>
+              <td>
+                <button class="btn btn-outline-success btn-sm" onclick="refreshTransaction('${r.request_id}')">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </td>
+            </tr>`;
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No entries available.</td></tr>`;
+      }
+    })
+    .catch(err => console.error("Error loading wallet requests:", err));
+}
+
+function getStatusColor(status) {
+  switch (status?.toLowerCase()) {
+    case "success": return "success";
+    case "pending": return "warning text-dark";
+    case "failed": return "danger";
+    default: return "secondary";
+  }
+}
+
+function refreshTransaction(requestId) {
+  alert("Refreshing transaction for Request ID: " + requestId);
+  // Here you can trigger a backend refresh API if available
+}
+</script>
+
