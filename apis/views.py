@@ -487,3 +487,104 @@ def payout_dashboard_stats(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Q
+from easebuzz.models import Merchant
+
+
+@api_view(["GET"])
+def payout_merchants_api(request):
+    """
+    Fetch all payout merchants dynamically.
+    Optional search: /api/easebuzz/payout_merchants/?q=<query>
+    """
+    try:
+        query = request.GET.get("q", "").strip()
+
+        merchants = Merchant.objects.all().order_by("business_name")
+        if query:
+            merchants = merchants.filter(
+                Q(business_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(mobile_no__icontains=query)
+            )
+
+        data = [
+            {
+                "business_name": m.business_name,
+                "mobile_no": m.mobile_no or "",
+                "email": m.email or "",
+                "inr_balance": float(m.inr_balance or 0),
+                "hold_balance": float(m.hold_balance or 0),
+                "prepaid_status": m.prepaid_status or "Inactive",
+            }
+            for m in merchants
+        ]
+
+        return Response(
+            {"status": 1, "count": len(data), "merchants": data},
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        print("❌ payout_merchants_api error:", e)
+        return Response(
+            {"status": 0, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+import hashlib
+import requests
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+# ==============================
+# CALLBACK DETAILS
+# ==============================
+
+@api_view(["GET"])
+def get_payout_callback_details(request):
+    """
+    Fetch payout callback details from Easebuzz.
+    Optional: ?pg_ref=<pg_ref>
+    """
+    try:
+        pg_ref = request.GET.get("pg_ref", "")
+
+        payload = {
+            "key": EASEBUZZ_KEY,
+            "hash": hashlib.sha512(f"{EASEBUZZ_KEY}|{EASEBUZZ_SALT}".encode()).hexdigest().upper(),
+        }
+
+        if pg_ref:
+            payload["pg_ref"] = pg_ref
+
+        # Official Easebuzz API for callback details
+        url = f"{EASEBUZZ_BASE_URL}/payout_callback_details"
+
+        response = requests.post(url, data=payload, timeout=25)
+        data = response.json()
+
+        # Normalize output
+        if isinstance(data, dict) and data.get("status") in ["1", 1, "success"]:
+            callbacks = data.get("data", [])
+            return Response({"status": 1, "callbacks": callbacks}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {
+                    "status": 0,
+                    "callbacks": [],
+                    "message": data.get("message", "No callback data found"),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+    except Exception as e:
+        print("❌ Error in get_payout_callback_details:", str(e))
+        return Response({"status": 0, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

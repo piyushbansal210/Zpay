@@ -1,8 +1,139 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Payout — Merchants</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/payout/merchants/</code>. Replace with your actual UI.</p>
+{% load static %}
+<div class="container-fluid mt-3 px-3">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h4 class="fw-semibold mb-0 text-dark">💰 Payout Merchant</h4>
+  </div>
+
+  <!-- ===== FILTER BAR ===== -->
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+    <div></div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-success btn-sm px-3 rounded-pill fw-semibold">INR</button>
+      <div class="input-group" style="width:220px;">
+        <input type="text" id="searchInput" class="form-control form-control-sm rounded-3" placeholder="BName/Email/Mobile">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MERCHANT TABLE ===== -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light text-muted small border-bottom">
+            <tr>
+              <th>Status</th>
+              <th>Business Name</th>
+              <th>Mobile No</th>
+              <th>Email</th>
+              <th>INR Balance</th>
+              <th>Hold Balance</th>
+              <th>Prepaid Status</th>
+              <th>Transfer</th>
+            </tr>
+          </thead>
+          <tbody id="merchantTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">
+                Loading payout merchants...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- ===== STYLES ===== -->
+<style>
+body { background-color: #f4fff2 !important; }
+
+.table th, .table td { vertical-align: middle; }
+.lock-icon { color: #16a34a; font-size: 1.2rem; }
+
+.transfer-btn {
+  background-color: #16a34a;
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(22,163,74,0.25);
+}
+.transfer-btn:hover { background-color: #15803d; }
+
+.status-inactive { color: #dc2626; font-weight: 600; }
+.status-active { color: #16a34a; font-weight: 600; }
+</style>
+
+<!-- ===== SCRIPT ===== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("%c💰 Payout Merchant Screen Loaded", "color:#16a34a;font-weight:bold;");
+  const tableBody = document.getElementById("merchantTableBody");
+  const searchInput = document.getElementById("searchInput");
+
+  function loadPayoutMerchants(query = "") {
+    const url = query
+      ? `/api/easebuzz/payout_merchants/?q=${encodeURIComponent(query)}`
+      : `/api/easebuzz/payout_merchants/`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const merchants = data.merchants || [];
+        tableBody.innerHTML = "";
+
+        if (!merchants.length) {
+          tableBody.innerHTML = `
+            <tr><td colspan="8" class="text-center text-muted py-4">No payout merchants found</td></tr>`;
+          return;
+        }
+
+        merchants.forEach(m => {
+          const statusIcon = `<i class="bi bi-lock-fill lock-icon"></i>`;
+          const prepaid = m.prepaid_status === "Active"
+            ? `<span class="status-active">Active</span>`
+            : `<span class="status-inactive">Inactive</span>`;
+
+          tableBody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td>${statusIcon}</td>
+              <td>${m.business_name}</td>
+              <td>${m.mobile_no}</td>
+              <td>${m.email}</td>
+              <td>₹${m.inr_balance.toFixed(2)}</td>
+              <td>₹${m.hold_balance.toFixed(2)}</td>
+              <td>${prepaid}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="transfer-btn"><i class="bi bi-currency-rupee"></i></button>
+                  <i class="bi bi-chevron-right text-muted"></i>
+                </div>
+              </td>
+            </tr>
+          `);
+        });
+      })
+      .catch(err => {
+        console.error("❌ Error loading payout merchants:", err);
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Error loading data</td></tr>`;
+      });
+  }
+
+  // Initial load
+  loadPayoutMerchants();
+
+  // Search feature
+  searchInput.addEventListener("input", e => {
+    const query = e.target.value.trim();
+    loadPayoutMerchants(query);
+  });
+});
+</script>

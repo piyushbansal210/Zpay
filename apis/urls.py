@@ -12,4 +12,6 @@ urlpatterns = [
     path("all_bulk_sheets/",views.all_bulk_sheets, name="all_bulk_sheets"),
 
     path("payout_dashboard/", views.payout_dashboard_stats, name="payout_dashboard_stats"),
+    path("easebuzz/payout_merchants/", views.payout_merchants_api, name="payout_merchants_api"),
+    path("payout/callback_details/", views.get_payout_callback_details, name="payout-callback-details"),
 ]
