@@ -1,0 +1,220 @@
+{% load static %}
+
+<div class="container-fluid">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">Easebuzz</li>
+      <li class="breadcrumb-item active text-success fw-semibold">Dashboard Overview</li>
+    </ol>
+  </nav>
+
+  <h3 class="fw-bold mb-4">Easebuzz – Overview</h3>
+
+  <!-- ================= TOP CARDS ================= -->
+  <div class="row g-3 mb-3">
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Total Merchants</h6>
+        <h3 class="fw-bold" id="eb_total_merchants">—</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Active Sessions</h6>
+        <h3 class="fw-bold" id="eb_active_sessions">—</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Active Currencies</h6>
+        <h3 class="fw-bold" id="eb_active_currencies">—</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Fraud Alerts</h6>
+        <h3 class="fw-bold text-danger" id="eb_fraud_count">—</h3>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= GRAPHS ================= -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="fw-semibold mb-2">Payin Trends</h5>
+        <canvas id="payinGraph" height="140"></canvas>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="fw-semibold mb-2">Payout Trends</h5>
+        <canvas id="payoutGraph" height="140"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= API USAGE QUICK SUMMARY ================= -->
+  <div class="card shadow-sm p-3 mb-4">
+    <h5 class="fw-semibold mb-3">API Summary</h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-3">
+        <div class="p-3 bg-light rounded border">
+          <h6 class="text-muted mb-1">Bulk Sheets</h6>
+          <h4 id="eb_bulk_sheets">—</h4>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="p-3 bg-light rounded border">
+          <h6 class="text-muted mb-1">Products</h6>
+          <h4 id="eb_products">—</h4>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="p-3 bg-light rounded border">
+          <h6 class="text-muted mb-1">Recent Payin</h6>
+          <h4 id="eb_recent_payin">—</h4>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="p-3 bg-light rounded border">
+          <h6 class="text-muted mb-1">Recent Payout</h6>
+          <h4 id="eb_recent_payout">—</h4>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= RECENT ACTIVITY TABLE ================= -->
+  <div class="card shadow-sm p-3">
+    <h5 class="fw-semibold mb-3">Recent Activity</h5>
+
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Type</th>
+          <th>Merchant</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="eb_recent_activity_rows">
+        <tr>
+          <td colspan="5" class="text-center text-muted py-3">Loading…</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+
+
+<!-- ============= CHART JS ============= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+  fetch("/api/easebuzz/overview/")
+    .then(res => res.json())
+    .then(d => {
+        let data = d.overview;
+
+        // Assign values to cards
+        document.getElementById("eb_total_merchants").innerText = data.merchant_count;
+        document.getElementById("eb_active_sessions").innerText = data.active_sessions;
+        document.getElementById("eb_active_currencies").innerText = data.active_currencies;
+        document.getElementById("eb_fraud_count").innerText = data.fraud_count;
+        document.getElementById("eb_bulk_sheets").innerText = data.bulk_sheets;
+        document.getElementById("eb_products").innerText = data.product_count;
+
+        document.getElementById("eb_recent_payin").innerText =
+            data.recent_payin.length + " Records";
+
+        document.getElementById("eb_recent_payout").innerText =
+            data.recent_payout.length + " Records";
+
+        /* ----------------- Recent Activity Table ----------------- */
+        let tbody = document.getElementById("eb_recent_activity_rows");
+        tbody.innerHTML = "";
+
+        let rows = [];
+
+        data.recent_payin.forEach(p => {
+            rows.push(`
+              <tr>
+                <td><span class="badge bg-success">Payin</span></td>
+                <td>${p.business_name || "-"}</td>
+                <td>₹${p.captured_amount || 0}</td>
+                <td>${p.pg_status || "-"}</td>
+                <td>${p.created_at || "-"}</td>
+              </tr>
+            `);
+        });
+
+        data.recent_payout.forEach(p => {
+            rows.push(`
+              <tr>
+                <td><span class="badge bg-primary">Payout</span></td>
+                <td>${p.business_name || "-"}</td>
+                <td>₹${p.amount || 0}</td>
+                <td>${p.status || "-"}</td>
+                <td>${p.date || "-"}</td>
+              </tr>
+            `);
+        });
+
+        tbody.innerHTML = rows.join("") || `
+            <tr><td colspan="5" class="text-center text-muted py-3">No Records Found</td></tr>
+        `;
+
+        /* ----------------- Payin Graph ----------------- */
+        new Chart(document.getElementById("payinGraph"), {
+            type: 'line',
+            data: {
+                labels: data.payin.total_requests.labels,
+                datasets: [{
+                    label: "Payins",
+                    data: data.payin.total_requests.values,
+                    borderColor: "#4caf50",
+                    tension: 0.4
+                }]
+            }
+        });
+
+        /* ----------------- Payout Graph ----------------- */
+        new Chart(document.getElementById("payoutGraph"), {
+            type: 'line',
+            data: {
+                labels: data.payout.graph.map(g => g.date),
+                datasets: [{
+                    label: "Payouts",
+                    data: data.payout.graph.map(g => g.value),
+                    borderColor: "#2196f3",
+                    tension: 0.4
+                }]
+            }
+        });
+
+    });
+
+});
+</script>

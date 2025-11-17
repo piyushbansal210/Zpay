@@ -1,8 +1,650 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Payin — Merchants</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/payin/merchants/</code>. Replace with your actual UI.</p>
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        <i class="bi bi-people-fill" style="color: var(--accent);"></i> Payin Merchants
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage and monitor all payin merchant accounts</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="exportBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-download"></i> Export
+      </button>
+      <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
     </div>
   </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Total Merchants</p>
+              <h4 class="mb-0 fw-bold" id="totalMerchants" style="color: var(--text);">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #dcfce7; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-people-fill" style="font-size: 1.5rem; color: #15803d;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Active</p>
+              <h4 class="mb-0 fw-bold" id="activeMerchants" style="color: var(--text);">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #dcfce7; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-check-circle-fill" style="font-size: 1.5rem; color: #15803d;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Total Balance</p>
+              <h4 class="mb-0 fw-bold" id="totalBalance" style="color: var(--text);">₹0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #e0f2fe; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-wallet2" style="font-size: 1.5rem; color: #0369a1;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Hold Balance</p>
+              <h4 class="mb-0 fw-bold" id="totalHold" style="color: var(--text);">₹0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #ffedd5; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-pause-circle" style="font-size: 1.5rem; color: #c2410c;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter and Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              id="searchMerchant" 
+              class="form-control ps-5" 
+              placeholder="Search by business name, email, or mobile..."
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 40px; background: var(--bg); font-size: 0.9rem;">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select id="currencyFilter" class="form-select" style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            <option value="INR">INR - Indian Rupee</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="statusFilter" class="form-select" style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merchants Table -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px; text-align: center;">Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Mobile</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Email</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">INR Balance</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Hold Balance</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Prepaid Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="merchantList">
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading merchants...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> merchants
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
 </div>
+
+<script>
+let merchantsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let searchTimeout = null;
+const API_TIMEOUT = 15000;
+
+function initPayinMerchantsPage() {
+  console.log('Initializing Payin Merchants Page...');
+  setupEventListeners();
+  loadPayinMerchants();
+}
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchMerchant');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const currencyFilter = document.getElementById('currencyFilter');
+  const statusFilter = document.getElementById('statusFilter');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterMerchants();
+      }, 350);
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadPayinMerchants);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportMerchants);
+  }
+
+  if (currencyFilter) {
+    currencyFilter.addEventListener('change', filterMerchants);
+  }
+
+  if (statusFilter) {
+    statusFilter.addEventListener('change', filterMerchants);
+  }
+}
+
+async function loadPayinMerchants() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('merchantList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading merchants...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const searchQuery = document.getElementById('searchMerchant').value.trim();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/api/easebuzz/payin_merchants/?q=${encodeURIComponent(searchQuery)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Payin Merchants API Response:', data);
+
+    if (data.status === 1 && data.merchants && data.merchants.length > 0) {
+      merchantsData = data.merchants;
+      filteredData = [...merchantsData];
+      updateStats();
+      renderTable();
+      showToast('Merchants loaded successfully', 'success');
+    } else {
+      merchantsData = [];
+      filteredData = [];
+      updateStats();
+      renderEmptyTable(data.message || 'No merchants found');
+    }
+
+  } catch (error) {
+    console.error('Error loading merchants:', error);
+    
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load merchants. ' + error.message);
+      showToast('Failed to load merchants', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function updateStats() {
+  const totalMerchants = filteredData.length;
+  const activeMerchants = filteredData.filter(m => m.prepaid_status === 'Active' || m.status === 'active').length;
+  const totalBalance = filteredData.reduce((sum, m) => sum + parseFloat(m.inr_balance || 0), 0);
+  const totalHold = filteredData.reduce((sum, m) => sum + parseFloat(m.hold_balance || 0), 0);
+
+  document.getElementById('totalMerchants').textContent = totalMerchants;
+  document.getElementById('activeMerchants').textContent = activeMerchants;
+  document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
+  document.getElementById('totalHold').textContent = formatCurrency(totalHold);
+}
+
+function filterMerchants() {
+  const searchTerm = document.getElementById('searchMerchant').value.toLowerCase().trim();
+  const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+
+  filteredData = merchantsData.filter(merchant => {
+    const businessName = (merchant.business_name || '').toLowerCase();
+    const email = (merchant.email || '').toLowerCase();
+    const mobile = (merchant.mobile_no || '').toLowerCase();
+    
+    const matchesSearch = !searchTerm || 
+                         businessName.includes(searchTerm) || 
+                         email.includes(searchTerm) || 
+                         mobile.includes(searchTerm);
+
+    const merchantStatus = (merchant.prepaid_status || merchant.status || 'inactive').toLowerCase();
+    const matchesStatus = statusFilter === 'all' || merchantStatus === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  currentPage = 1;
+  updateStats();
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('merchantList');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No merchants match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map(merchant => {
+    const businessName = merchant.business_name || 'N/A';
+    const mobile = merchant.mobile_no || '-';
+    const email = merchant.email || '-';
+    const inrBalance = parseFloat(merchant.inr_balance || 0);
+    const holdBalance = parseFloat(merchant.hold_balance || 0);
+    const prepaidStatus = merchant.prepaid_status || 'Inactive';
+
+    const isActive = prepaidStatus.toLowerCase() === 'active';
+    const statusColor = isActive ? '#15803d' : '#b91c1c';
+    const statusBg = isActive ? '#dcfce7' : '#fee2e2';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; text-align: center;">
+          <div style="width: 10px; height: 10px; background: ${statusColor}; border-radius: 50%; margin: 0 auto;"></div>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-building me-2" style="color: var(--accent);"></i>${truncateText(businessName, 20)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${mobile !== '-' ? `<i class="bi bi-phone me-2" style="color: var(--muted);"></i>${mobile}` : '-'}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${email !== '-' ? `<i class="bi bi-envelope me-2" style="color: var(--muted);"></i>${truncateText(email, 25)}` : '-'}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: #15803d; font-size: 0.875rem; font-weight: 700;">
+          ${formatCurrency(inrBalance)}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: #b91c1c; font-size: 0.875rem; font-weight: 700;">
+          ${formatCurrency(holdBalance)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: ${statusBg}; color: ${statusColor}; border: 1px solid ${isActive ? '#bbf7d0' : '#fecaca'}; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${prepaidStatus}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <div class="d-flex gap-2 justify-content-center">
+            <button class="btn btn-sm" onclick="transferBalance('${businessName}')" title="Transfer" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 12px;">
+              <i class="bi bi-arrow-left-right"></i>
+            </button>
+            <button class="btn btn-sm" onclick="sendNotification('${businessName}')" title="Send" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No merchants found') {
+  const tbody = document.getElementById('merchantList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Merchants</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function transferBalance(businessName) {
+  showToast(`Transfer initiated for ${businessName}`, 'info');
+  // Add your transfer logic here
+}
+
+function sendNotification(businessName) {
+  showToast(`Notification sent to ${businessName}`, 'success');
+  // Add your notification logic here
+}
+
+function exportMerchants() {
+  if (filteredData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  try {
+    const csvContent = [
+      ['Payin Merchants Export - ' + new Date().toLocaleDateString()],
+      [''],
+      ['Business Name', 'Mobile', 'Email', 'INR Balance', 'Hold Balance', 'Prepaid Status'],
+      ...filteredData.map(m => [
+        m.business_name || '',
+        m.mobile_no || '',
+        m.email || '',
+        m.inr_balance || '0',
+        m.hold_balance || '0',
+        m.prepaid_status || 'Inactive'
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payin_merchants_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showToast('Merchants exported successfully', 'success');
+  } catch (error) {
+    console.error('Error exporting merchants:', error);
+    showToast('Failed to export merchants', 'error');
+  }
+}
+
+function truncateText(text, limit) {
+  if (!text) return '-';
+  return text.length > limit ? text.substring(0, limit) + '…' : text;
+}
+
+function formatCurrency(amount) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount || 0);
+  } catch (e) {
+    return '₹' + (amount || 0);
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  
+  const iconMap = {
+    success: 'check-circle',
+    error: 'exclamation-circle',
+    info: 'info-circle',
+    warning: 'exclamation-triangle'
+  };
+  
+  const alertMap = {
+    success: 'success',
+    error: 'danger',
+    info: 'info',
+    warning: 'warning'
+  };
+  
+  toast.innerHTML = `
+    <div class="alert alert-${alertMap[type] || 'info'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow); min-width: 300px;">
+      <i class="bi bi-${iconMap[type] || 'info-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    const alert = toast.querySelector('.alert');
+    if (alert) {
+      alert.classList.remove('show');
+      setTimeout(() => toast.remove(), 150);
+    }
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Initialize page on load
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('merchantList')) {
+    initPayinMerchantsPage();
+  }
+});
+
+// Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#merchantList')) {
+    setTimeout(initPayinMerchantsPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+.alert {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>

@@ -1,3 +1,9 @@
-{% extends "dashboard/base.html" %}
-{% block content %}{% include "easebuzz/partials/payout_transaction.html" %}{% endblock %}
-<h4>this is the ticket in payout page</h4>
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class='container mt-4'>
+  <h6 class='mb-3 text-success fw-semibold'>payout_transaction.html</h6>
+  {% include 'easebuzz/partials/payout/payout_transaction' %}
+
+</div>
+{% endblock %}

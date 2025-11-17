@@ -1,8 +1,513 @@
-<div class="container-fluid mt-2">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Product — Query</h4>
-      <p class="text-muted mb-0">Placeholder for <code>/product/query/</code>. Replace with your actual UI.</p>
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Product Query
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View and manage product-related queries</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="loadQueries()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Filter and Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-funnel me-2" style="color: var(--accent);"></i>Filter by Status
+          </label>
+          <div class="btn-group w-100" role="group">
+            <button type="button" id="pendingBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px 0 0 10px; padding: 10px 20px; font-weight: 600;">
+              <i class="bi bi-clock-fill"></i> Pending
+            </button>
+            <button type="button" id="completedBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 0 10px 10px 0; padding: 10px 20px; font-weight: 600;">
+              <i class="bi bi-check-circle-fill"></i> Completed
+            </button>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <label for="searchBox" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-search me-2" style="color: var(--accent);"></i>Search
+          </label>
+          <input 
+            type="text" 
+            id="searchBox" 
+            class="form-control" 
+            placeholder="Search by Username, Product Name, or UTR..."
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg); font-size: 0.9rem;">
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Queries Table -->
+  <div id="queriesTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Created Date & Time</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Username</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Product Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Transaction Type</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Currency</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">UTR</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Quantity</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Price</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Requested Amount</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Requested Account</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-right-radius: 14px;">Conversation</th>
+            </tr>
+          </thead>
+          <tbody id="queriesTableBody">
+            <tr>
+              <td colspan="11" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading queries...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> queries
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
 </div>
+
+<script>
+let queriesData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let searchTimeout = null;
+let currentStatus = 'pending';
+const API_TIMEOUT = 10000;
+
+function initProductQueryPage() {
+  console.log('Initializing Product Query Page...');
+  setupEventListeners();
+  loadQueries();
+}
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchBox');
+  const pendingBtn = document.getElementById('pendingBtn');
+  const completedBtn = document.getElementById('completedBtn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterQueries();
+      }, 600);
+    });
+  }
+
+  if (pendingBtn) {
+    pendingBtn.addEventListener('click', () => switchStatus('pending'));
+  }
+
+  if (completedBtn) {
+    completedBtn.addEventListener('click', () => switchStatus('completed'));
+  }
+}
+
+function switchStatus(status) {
+  currentStatus = status;
+  
+  const pendingBtn = document.getElementById('pendingBtn');
+  const completedBtn = document.getElementById('completedBtn');
+  
+  if (status === 'pending') {
+    pendingBtn.style.background = 'var(--accent)';
+    pendingBtn.style.color = 'var(--accent-ink)';
+    pendingBtn.style.border = 'none';
+    
+    completedBtn.style.background = 'var(--page)';
+    completedBtn.style.color = 'var(--text)';
+    completedBtn.style.border = '1px solid var(--stroke)';
+  } else {
+    completedBtn.style.background = 'var(--accent)';
+    completedBtn.style.color = 'var(--accent-ink)';
+    completedBtn.style.border = 'none';
+    
+    pendingBtn.style.background = 'var(--page)';
+    pendingBtn.style.color = 'var(--text)';
+    pendingBtn.style.border = '1px solid var(--stroke)';
+  }
+  
+  loadQueries();
+}
+
+async function loadQueries() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('queriesTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="11" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading queries...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const searchQuery = document.getElementById('searchBox').value.trim();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/easebuzz/product/query/?status=${currentStatus}&search=${encodeURIComponent(searchQuery)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      queriesData = data.results;
+      filteredData = [...queriesData];
+      renderTable();
+      showToast('Queries loaded successfully', 'success');
+    } else {
+      queriesData = [];
+      filteredData = [];
+      renderEmptyTable(`No ${currentStatus} queries found`);
+    }
+
+  } catch (error) {
+    console.error('Error loading queries:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load queries. ' + error.message);
+      showToast('Failed to load queries', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function filterQueries() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  if (!searchTerm) {
+    filteredData = [...queriesData];
+  } else {
+    filteredData = queriesData.filter(query => {
+      const username = (query.username || '').toLowerCase();
+      const productName = (query.product_name || '').toLowerCase();
+      const utr = (query.utr || '').toLowerCase();
+
+      return username.includes(searchTerm) || 
+             productName.includes(searchTerm) || 
+             utr.includes(searchTerm);
+    });
+  }
+
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('queriesTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No queries match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((query) => {
+    const createdAt = query.created_at || query.createdAt || '-';
+    const username = query.username || '-';
+    const productName = query.product_name || query.productName || '-';
+    const txnType = query.txn_type || query.transactionType || '-';
+    const currency = query.currency || 'INR';
+    const utr = query.utr || query.UTR || '-';
+    const quantity = query.quantity || '0';
+    const price = query.price || '0';
+    const requestAmount = query.request_amount || query.requestAmount || '0';
+    const requestAccount = query.request_account || query.requestAccount || '-';
+    const conversation = query.conversation || '-';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          <i class="bi bi-calendar3 me-2"></i>${formatDateTime(createdAt)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-person-circle me-2" style="color: var(--accent);"></i>${username}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${productName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <span style="background: var(--page); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--stroke);">
+            ${txnType}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          ${currency}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${utr}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${quantity}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-rupee" style="color: var(--accent);"></i>${formatAmount(price)}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 700;">
+          <i class="bi bi-currency-rupee" style="color: var(--accent);"></i>${formatAmount(requestAmount)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${requestAccount}
+        </td>
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${conversation}">
+          ${conversation}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No queries found') {
+  const tbody = document.getElementById('queriesTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="11" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Queries</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatAmount(amount) {
+  try {
+    return parseFloat(amount).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  } catch (e) {
+    return amount;
+  }
+}
+
+function formatDateTime(dateString) {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('queriesTable')) {
+    initProductQueryPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#queriesTable')) {
+    setTimeout(initProductQueryPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn {
+  margin: 0 !important;
+}
+
+.btn-group .btn:first-child {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.btn-group .btn:last-child {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+</style>

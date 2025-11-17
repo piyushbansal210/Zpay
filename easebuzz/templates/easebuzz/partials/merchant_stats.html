@@ -1,164 +1,632 @@
-<div class="container-fluid p-3">
-  <!-- ================= HEADER ================= -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4 class="fw-semibold mb-0 d-flex align-items-center gap-2">
-      <i class="bi bi-graph-up text-primary"></i> Merchant Stats
-    </h4>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-      <label class="small text-muted">From:</label>
-      <input type="date" id="fromDate" class="form-control form-control-sm" style="width: 150px;">
-      <label class="small text-muted">To:</label>
-      <input type="date" id="toDate" class="form-control form-control-sm" style="width: 150px;">
-      <button class="btn btn-outline-primary btn-sm" id="refreshStats">
-        <i class="bi bi-arrow-repeat"></i> Refresh
-      </button>
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Merchant Stats</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View comprehensive merchant transaction analytics</p>
+    </div>
+    <div class="position-relative" style="width: 300px;">
+      <input 
+        type="text" 
+        id="tableSearch" 
+        class="form-control ps-5" 
+        placeholder="Search by business name..."
+        style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 42px; background: var(--bg); font-size: 0.9rem;">
+      <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
     </div>
   </div>
 
-  <!-- ================= LOADING ================= -->
-  <div id="loadingStats" class="text-center py-4 d-none">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted small">Fetching latest merchant stats...</p>
+  <!-- Date Range Filter Card -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label fw-medium mb-2" style="color: var(--text); font-size: 0.875rem;">
+            <i class="bi bi-calendar-event" style="color: var(--accent);"></i> From Date
+          </label>
+          <input 
+            type="date" 
+            id="fromDate" 
+            class="form-control"
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-medium mb-2" style="color: var(--text); font-size: 0.875rem;">
+            <i class="bi bi-calendar-check" style="color: var(--accent);"></i> To Date
+          </label>
+          <input 
+            type="date" 
+            id="toDate" 
+            class="form-control"
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex gap-2">
+            <button class="btn flex-fill" onclick="loadStats()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 12px 24px; font-weight: 600;">
+              <i class="bi bi-search"></i> Filter
+            </button>
+            <button class="btn flex-fill" onclick="resetFilters()" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 12px 24px;">
+              <i class="bi bi-arrow-clockwise"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- ================= STATS CARDS ================= -->
-  <div id="statsSummary" class="row g-3 mb-4"></div>
+  <!-- Date Range Display -->
+  <div id="dateRangeDisplay" class="mb-3">
+    <div class="d-flex align-items-center gap-2" style="color: var(--muted); font-size: 0.875rem;">
+      <i class="bi bi-info-circle"></i>
+      <span id="dateRangeText">Showing from Aug. 23, 2025 to Sept. 2, 2025</span>
+    </div>
+  </div>
 
-  <!-- ================= TABLE ================= -->
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-semibold mb-0">Merchant-wise Details</h5>
-        <small class="text-muted" id="statsPeriod"></small>
-      </div>
+  <!-- Merchants Table -->
+  <div id="merchantsTable" class="card border-0 rounded-4 card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body " style="padding: 0;">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
             <tr>
-              <th>#</th>
-              <th>Merchant Name</th>
-              <th>Merchant Key</th>
-              <th class="text-end">Payin Value</th>
-              <th class="text-end">Payin Count</th>
-              <th class="text-end">Payout Value</th>
-              <th class="text-end">Payout Count</th>
-              <th class="text-center">Currency</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Value of Transactions (Payout)</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Number of Transactions (Payout)</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Value of Transactions (Payin)</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Number of Transactions (Payin)</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Currency</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">View Stats</th>
             </tr>
           </thead>
-          <tbody id="merchantTableBody"></tbody>
+          <tbody id="merchantTableBody">
+            <!-- Total row and merchant rows will be rendered here -->
+          </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> entries
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList">
+        <!-- Pagination will be generated here -->
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="merchantDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--stroke); padding: 20px 24px;">
+        <h5 class="modal-title fw-semibold" style="color: var(--text);">
+          <i class="bi bi-bar-chart-line" style="color: var(--accent);"></i> Merchant Statistics Detail
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;" id="merchantDetailBody">
+        <!-- Details will be loaded here -->
       </div>
     </div>
   </div>
 </div>
 
 <script>
+let merchantsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+
+// Initialize on page load
 function initMerchantStatsPage() {
-  const fromInput = document.getElementById("fromDate");
-  const toInput = document.getElementById("toDate");
-  const refreshButton = document.getElementById("refreshStats");
-  const summary = document.getElementById("statsSummary");
-  const tableBody = document.getElementById("merchantTableBody");
-  const loading = document.getElementById("loadingStats");
-  const statsPeriod = document.getElementById("statsPeriod");
+  console.log('Initializing Merchant Stats Page...');
+  
+  // Set default date range (last 10 days)
+  setDateRange(10);
+  
+  // Setup event listeners
+  setupEventListeners();
+  
+  // Load stats immediately
+  loadStats();
+}
 
-  if (!fromInput || !toInput || !refreshButton) return;
+function setupEventListeners() {
+  // Search input with debounce
+  let searchTimeout;
+  const searchInput = document.getElementById('tableSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterTable();
+      }, 300);
+    });
+  }
+}
 
-  // Default 30 days
-  const today = new Date();
-  const priorDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-  toInput.value = today.toISOString().split("T")[0];
-  fromInput.value = priorDate.toISOString().split("T")[0];
+function setDateRange(days) {
+  const toDate = new Date();
+  const fromDate = new Date(toDate.getTime() - days * 24 * 60 * 60 * 1000);
+  
+  document.getElementById('toDate').value = formatDateForInput(toDate);
+  document.getElementById('fromDate').value = formatDateForInput(fromDate);
+}
 
-  async function loadStats() {
-    const fromDate = fromInput.value;
-    const toDate = toInput.value;
-    summary.innerHTML = "";
-    tableBody.innerHTML = "";
-    statsPeriod.textContent = "";
-    loading.classList.remove("d-none");
+function formatDateForInput(date) {
+  return date.toISOString().split('T')[0];
+}
 
-    try {
-      const res = await fetch(`/api/merchant-stats/?from_date=${fromDate}&to_date=${toDate}`);
-      const data = await res.json();
-      loading.classList.add("d-none");
+function formatDateDisplay(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
 
-      if (!res.ok || !data.data) {
-        summary.innerHTML = `<div class="alert alert-danger">❌ Failed to load merchant stats.</div>`;
-        return;
+async function loadStats() {
+  if (isLoading) return;
+  
+  const fromDate = document.getElementById('fromDate').value;
+  const toDate = document.getElementById('toDate').value;
+  
+  // Validate dates
+  if (!fromDate || !toDate) {
+    showToast('Please select both from and to dates', 'error');
+    return;
+  }
+  
+  if (new Date(fromDate) > new Date(toDate)) {
+    showToast('From date cannot be after To date', 'error');
+    return;
+  }
+  
+  isLoading = true;
+  
+  try {
+    const response = await fetch(`/api/merchant-stats/?from_date=${fromDate}&to_date=${toDate}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
       }
+    });
 
-      const merchants = data.data;
-      const totalMerchants = merchants.length;
-      const totalPayin = merchants.reduce((sum, m) => sum + (parseFloat(m.value_payin) || 0), 0);
-      const totalPayout = merchants.reduce((sum, m) => sum + (parseFloat(m.value_payout) || 0), 0);
-      const totalPayinCount = merchants.reduce((sum, m) => sum + (parseInt(m.num_payin) || 0), 0);
-      const totalPayoutCount = merchants.reduce((sum, m) => sum + (parseInt(m.num_payout) || 0), 0);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-      statsPeriod.textContent = `Showing data from ${data.from_date} to ${data.to_date}`;
+    const data = await response.json();
+    
+    // Handle different response structures
+    if (data.success === false) {
+      throw new Error(data.message || 'Failed to load merchant statistics');
+    }
 
-      // Summary
-      summary.innerHTML = `
-        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
-          <i class="bi bi-people-fill fs-3 text-primary"></i>
-          <h6 class="fw-semibold mt-2 mb-0">Total Merchants</h6>
-          <h4 class="fw-bold text-primary">${totalMerchants}</h4>
-        </div></div>
-        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
-          <i class="bi bi-wallet2 fs-3 text-success"></i>
-          <h6 class="fw-semibold mt-2 mb-0">Total Payin</h6>
-          <h4 class="fw-bold text-success">₹${totalPayin.toLocaleString()}</h4>
-          <small class="text-muted">${totalPayinCount} transactions</small>
-        </div></div>
-        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
-          <i class="bi bi-credit-card-2-front fs-3 text-warning"></i>
-          <h6 class="fw-semibold mt-2 mb-0">Total Payout</h6>
-          <h4 class="fw-bold text-warning">₹${totalPayout.toLocaleString()}</h4>
-          <small class="text-muted">${totalPayoutCount} transactions</small>
-        </div></div>
-        <div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 text-center">
-          <i class="bi bi-cash-stack fs-3 text-info"></i>
-          <h6 class="fw-semibold mt-2 mb-0">Net Flow</h6>
-          <h4 class="fw-bold text-info">₹${(totalPayin - totalPayout).toLocaleString()}</h4>
-        </div></div>
+    // Extract merchants array from various possible response formats
+    merchantsData = data.data || data.merchants || data.results || [];
+    
+    if (!Array.isArray(merchantsData)) {
+      merchantsData = [];
+    }
+
+    // Update date range display
+    const fromDateDisplay = data.from_date || fromDate;
+    const toDateDisplay = data.to_date || toDate;
+    document.getElementById('dateRangeText').textContent = `Showing from ${formatDateDisplay(fromDateDisplay)} to ${formatDateDisplay(toDateDisplay)}`;
+
+    // Always show table - even with empty data
+    filteredData = [...merchantsData];
+    renderTable();
+
+  } catch (error) {
+    console.error('Error loading merchant stats:', error);
+    // Even on error, show table with empty/zero data
+    merchantsData = [];
+    filteredData = [];
+    renderTable();
+    showToast('Error loading statistics: ' + error.message, 'error');
+  } finally {
+    isLoading = false;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('merchantTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  // Calculate totals
+  const totalPayoutValue = filteredData.reduce((sum, m) => sum + (parseFloat(m.value_payout || m.payout_value || 0)), 0);
+  const totalPayoutCount = filteredData.reduce((sum, m) => sum + (parseInt(m.num_payout || m.payout_count || 0)), 0);
+  const totalPayinValue = filteredData.reduce((sum, m) => sum + (parseFloat(m.value_payin || m.payin_value || 0)), 0);
+  const totalPayinCount = filteredData.reduce((sum, m) => sum + (parseInt(m.num_payin || m.payin_count || 0)), 0);
+
+  // Build Total row
+  let tableHTML = `
+    <tr style="background: var(--page); border-bottom: 2px solid var(--stroke); font-weight: 600;">
+      <td style="padding: 16px 20px; color: var(--text); font-weight: 700; font-size: 0.9rem;">
+        Total
+      </td>
+      <td style="padding: 16px 20px; text-align: right; color: var(--text); font-weight: 600; font-size: 0.9rem;">
+        ₹${formatCurrency(totalPayoutValue)}
+      </td>
+      <td style="padding: 16px 20px; text-align: right; color: var(--text); font-weight: 600; font-size: 0.9rem;">
+        ${totalPayoutCount.toLocaleString()}
+      </td>
+      <td style="padding: 16px 20px; text-align: right; color: var(--text); font-weight: 600; font-size: 0.9rem;">
+        ₹${formatCurrency(totalPayinValue)}
+      </td>
+      <td style="padding: 16px 20px; text-align: right; color: var(--text); font-weight: 600; font-size: 0.9rem;">
+        ${totalPayinCount.toLocaleString()}
+      </td>
+      <td style="padding: 16px 20px; text-align: center;">
+        <span style="color: var(--muted); font-size: 0.875rem;">-</span>
+      </td>
+      <td style="padding: 16px 20px; text-align: center;">
+        <span style="color: var(--muted); font-size: 0.875rem;">-</span>
+      </td>
+    </tr>
+  `;
+
+  // Add merchant rows
+  if (paginatedData.length === 0) {
+    // Show message when no merchants
+    tableHTML += `
+      <tr>
+        <td colspan="7" class="text-center py-4" style="color: var(--muted); font-size: 0.9rem;">
+          No merchant data available for the selected period
+        </td>
+      </tr>
+    `;
+  } else {
+    paginatedData.forEach((merchant) => {
+      const merchantName = merchant.merchant_name || merchant.business_name || merchant.name || 'N/A';
+      const payoutValue = parseFloat(merchant.value_payout || merchant.payout_value || 0);
+      const payoutCount = parseInt(merchant.num_payout || merchant.payout_count || 0);
+      const payinValue = parseFloat(merchant.value_payin || merchant.payin_value || 0);
+      const payinCount = parseInt(merchant.num_payin || merchant.payin_count || 0);
+      const currency = merchant.currency || 'INR';
+      
+      tableHTML += `
+        <tr style="border-bottom: 1px solid var(--stroke);">
+          <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+            ${merchantName}
+          </td>
+          <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem;">
+            ₹${formatCurrency(payoutValue)}
+          </td>
+          <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem;">
+            ${payoutCount.toLocaleString()}
+          </td>
+          <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem;">
+            ₹${formatCurrency(payinValue)}
+          </td>
+          <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem;">
+            ${payinCount.toLocaleString()}
+          </td>
+          <td style="padding: 16px 20px; text-align: center;">
+            <span style="color: var(--text); font-size: 0.875rem;">${currency}</span>
+          </td>
+          <td style="padding: 16px 20px; text-align: center;">
+            <button class="btn btn-sm" onclick='viewMerchantDetail(${JSON.stringify(merchant).replace(/'/g, "\\'")})'
+              style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;" 
+              title="View Stats">
+              <i class="bi bi-eye"></i>
+            </button>
+          </td>
+        </tr>
       `;
+    });
+  }
 
-      // Table
-      merchants.forEach((m, i) => {
-        tableBody.innerHTML += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${m.merchant_name || "-"}</td>
-            <td>${m.merchant_key || "-"}</td>
-            <td class="text-end">₹${m.value_payin || 0}</td>
-            <td class="text-end">${m.num_payin || 0}</td>
-            <td class="text-end">₹${m.value_payout || 0}</td>
-            <td class="text-end">${m.num_payout || 0}</td>
-            <td class="text-center">${m.currency || "INR"}</td>
-          </tr>`;
-      });
-    } catch (err) {
-      console.error(err);
-      loading.classList.add("d-none");
-      summary.innerHTML = `<div class="alert alert-danger">❌ Unable to fetch data.</div>`;
+  tbody.innerHTML = tableHTML;
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+  
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+  
+  // Update showing text
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = '';
+
+  // Previous button
+  paginationHTML += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
     }
   }
 
-  // Auto load immediately
-  loadStats();
+  // Next button
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
 
-  // Manual refresh
-  refreshButton.addEventListener("click", loadStats);
+  paginationList.innerHTML = paginationHTML;
 }
 
-// ✅ Handle direct loads (if user reloads page)
-document.addEventListener("DOMContentLoaded", initMerchantStatsPage);
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-// ✅ Handle dynamic HTMX page loads
-document.body.addEventListener("htmx:afterSettle", (evt) => {
-  if (evt.detail.target && evt.detail.target.querySelector("#refreshStats")) {
-    // small delay to allow browser to render DOM before script runs
+function resetFilters() {
+  setDateRange(10);
+  document.getElementById('tableSearch').value = '';
+  loadStats();
+}
+
+function filterTable() {
+  const searchTerm = document.getElementById('tableSearch').value.toLowerCase().trim();
+
+  filteredData = merchantsData.filter(merchant => {
+    const merchantName = (merchant.merchant_name || merchant.business_name || merchant.name || '').toLowerCase();
+    
+    return merchantName.includes(searchTerm);
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function viewMerchantDetail(merchant) {
+  const modal = new bootstrap.Modal(document.getElementById('merchantDetailModal'));
+  const body = document.getElementById('merchantDetailBody');
+  
+  const merchantName = merchant.merchant_name || merchant.business_name || merchant.name || 'N/A';
+  const payinValue = parseFloat(merchant.value_payin || merchant.payin_value || 0);
+  const payinCount = parseInt(merchant.num_payin || merchant.payin_count || 0);
+  const payoutValue = parseFloat(merchant.value_payout || merchant.payout_value || 0);
+  const payoutCount = parseInt(merchant.num_payout || merchant.payout_count || 0);
+  const currency = merchant.currency || 'INR';
+  const netFlow = payinValue - payoutValue;
+  const avgPayin = payinCount > 0 ? payinValue / payinCount : 0;
+  const avgPayout = payoutCount > 0 ? payoutValue / payoutCount : 0;
+  
+  body.innerHTML = `
+    <div class="row g-4">
+      <!-- Merchant Info -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-building" style="color: var(--accent);"></i> Merchant Information
+          </h6>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Merchant Name</div>
+              <div style="color: var(--text); font-weight: 600;">${merchantName}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Currency</div>
+              <div style="color: var(--text); font-weight: 600;">${currency}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payin Stats -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0;">
+          <h6 class="fw-semibold mb-3" style="color: #15803d;">
+            <i class="bi bi-arrow-down-circle"></i> Payin Statistics
+          </h6>
+          <div class="row g-3">
+            <div class="col-4">
+              <div class="mb-2" style="color: #166534; font-size: 0.8rem;">Total Value</div>
+              <div style="color: #15803d; font-weight: 700; font-size: 1.3rem;">₹${formatCurrency(payinValue)}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: #166534; font-size: 0.8rem;">Total Count</div>
+              <div style="color: #15803d; font-weight: 700; font-size: 1.3rem;">${payinCount.toLocaleString()}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: #166534; font-size: 0.8rem;">Average Value</div>
+              <div style="color: #15803d; font-weight: 700; font-size: 1.3rem;">₹${formatCurrency(avgPayin)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payout Stats -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fed7aa;">
+          <h6 class="fw-semibold mb-3" style="color: #c2410c;">
+            <i class="bi bi-arrow-up-circle"></i> Payout Statistics
+          </h6>
+          <div class="row g-3">
+            <div class="col-4">
+              <div class="mb-2" style="color: #9a3412; font-size: 0.8rem;">Total Value</div>
+              <div style="color: #c2410c; font-weight: 700; font-size: 1.3rem;">₹${formatCurrency(payoutValue)}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: #9a3412; font-size: 0.8rem;">Total Count</div>
+              <div style="color: #c2410c; font-weight: 700; font-size: 1.3rem;">${payoutCount.toLocaleString()}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: #9a3412; font-size: 0.8rem;">Average Value</div>
+              <div style="color: #c2410c; font-weight: 700; font-size: 1.3rem;">₹${formatCurrency(avgPayout)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Flow -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: ${netFlow >= 0 ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)' : 'linear-gradient(135deg, #fef2f2, #fee2e2)'}; border: 1px solid ${netFlow >= 0 ? '#bbf7d0' : '#fecaca'};">
+          <h6 class="fw-semibold mb-3" style="color: ${netFlow >= 0 ? '#15803d' : '#b91c1c'};">
+            <i class="bi bi-cash-stack"></i> Net Flow
+          </h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="mb-2" style="color: ${netFlow >= 0 ? '#166534' : '#991b1b'}; font-size: 0.8rem;">Net Balance</div>
+              <div style="color: ${netFlow >= 0 ? '#15803d' : '#b91c1c'}; font-weight: 700; font-size: 1.5rem;">
+                ₹${formatCurrency(Math.abs(netFlow))}
+                <span style="font-size: 0.9rem; margin-left: 8px;">(${netFlow >= 0 ? 'Surplus' : 'Deficit'})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.show();
+}
+
+function formatCurrency(amount) {
+  return amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ✅ Handle direct page loads (when user reloads page)
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOMContentLoaded - checking if merchant stats page...');
+  if (document.getElementById('merchantsTable')) {
+    initMerchantStatsPage();
+  }
+});
+
+// ✅ Handle HTMX navigation (when user navigates from another page)
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  console.log('HTMX afterSettle event detected');
+  if (event.detail.target && event.detail.target.querySelector('#merchantsTable')) {
+    console.log('Merchant stats page detected after HTMX load');
     setTimeout(initMerchantStatsPage, 50);
   }
 });
+
+// ✅ Handle HTMX before swap (cleanup if needed)
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
 </script>
+
+<style>
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+/* Form controls focus */
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Button hover effects */
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Pagination active state */
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+</style>

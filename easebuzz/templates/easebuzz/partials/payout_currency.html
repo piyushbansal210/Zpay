@@ -1,122 +1,350 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Currency Management
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage currency rates and service charges</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="fetchCurrencies()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
 
-<div class="container mt-4">
-  <!-- Breadcrumb -->
-  <h6 class="mb-3">
-    Master Bank / <span class="text-success fw-semibold">Currency</span>
-  </h6>
-
-  <!-- Main Card -->
-  <div class="card p-3 shadow-sm bg-white rounded">
-    <h6 class="fw-semibold mb-2">Currency</h6>
-
-    <!-- Table -->
-    <table class="table align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Currency Name</th>
-          <th>Symbol</th>
-          <th>Origin</th>
-          <th>Current Rate</th>
-          <th>Service Charge</th>
-          <th>Total Price</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="currencyTableBody">
-        <tr>
-          <td colspan="7" class="text-center text-muted">Loading...</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Currency Table -->
+  <div id="currencyTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Currency Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Symbol</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Origin</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Current Rate</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Service Charge</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Total Price</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="currencyTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading currencies...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ====================== SCRIPT ====================== -->
-<script>
-document.addEventListener("DOMContentLoaded", fetchCurrencies);
-
-function fetchCurrencies() {
-  const url = "/api/active_currency/";
-  const tbody = document.getElementById("currencyTableBody");
-
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      tbody.innerHTML = "";
-
-      if (data.currencies && data.currencies.length > 0) {
-        data.currencies.forEach(cur => {
-          tbody.innerHTML += `
-            <tr>
-              <td>${cur.currency_name || '-'}</td>
-              <td>${cur.symbol || '-'}</td>
-              <td>${cur.origin || '-'}</td>
-              <td>${parseFloat(cur.current_rate || 0).toFixed(2)}</td>
-              <td>${parseFloat(cur.service_charge || 0).toFixed(2)}</td>
-              <td>${parseFloat(cur.total_price || 0).toFixed(2)}</td>
-              <td>
-                <button class="btn btn-success btn-sm" onclick="openEditModal('${cur.currency_name}', ${cur.current_rate}, ${cur.service_charge})">
-                  <i class="bi bi-pencil"></i>
-                </button>
-              </td>
-            </tr>`;
-        });
-      } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No currencies found</td></tr>`;
-      }
-    })
-    .catch(err => {
-      console.error("Error loading currencies:", err);
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error fetching data</td></tr>`;
-    });
-}
-
-/* ===================== EDIT MODAL ===================== */
-function openEditModal(currency, rate, charge) {
-  const modal = document.createElement("div");
-  modal.classList.add("modal-backdrop");
-  modal.innerHTML = `
-    <div class="modal fade show" tabindex="-1" style="display:block; background-color:rgba(0,0,0,0.4)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-success text-white">
-            <h6 class="modal-title">Edit ${currency} Currency</h6>
-            <button type="button" class="btn-close" onclick="closeModal()"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Current Rate</label>
-              <input type="number" id="editRate" class="form-control" value="${rate}">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Service Charge</label>
-              <input type="number" id="editCharge" class="form-control" value="${charge}">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-success" onclick="saveCurrency('${currency}')">Save</button>
-          </div>
+<!-- Edit Currency Modal -->
+<div class="modal fade" id="editCurrencyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-header" style="background: var(--accent); color: var(--accent-ink); border-bottom: 1px solid var(--stroke); padding: 20px 24px; border-radius: 14px 14px 0 0;">
+        <h5 class="modal-title fw-semibold">
+          <i class="bi bi-pencil-square me-2"></i><span id="modalCurrencyName">Edit Currency</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div class="mb-3">
+          <label for="editRate" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+            <i class="bi bi-graph-up me-2" style="color: var(--accent);"></i>Current Rate
+          </label>
+          <input type="number" id="editRate" class="form-control" step="0.01" 
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+        </div>
+        <div class="mb-3">
+          <label for="editCharge" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+            <i class="bi bi-cash me-2" style="color: var(--accent);"></i>Service Charge
+          </label>
+          <input type="number" id="editCharge" class="form-control" step="0.01" 
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+        </div>
+        <div class="alert alert-info" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; border-radius: 10px; padding: 12px;">
+          <i class="bi bi-info-circle me-2"></i>Total Price = Current Rate + Service Charge
         </div>
       </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--stroke); padding: 16px 24px;">
+        <button type="button" class="btn" data-bs-dismiss="modal" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 8px 16px;">
+          Cancel
+        </button>
+        <button type="button" class="btn" onclick="saveCurrency()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 20px; font-weight: 600;">
+          <i class="bi bi-check-circle me-1"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currenciesData = [];
+let currentEditCurrency = null;
+let isLoading = false;
+const API_TIMEOUT = 5000;
+
+function initCurrencyPage() {
+  console.log('Initializing Currency Page...');
+  fetchCurrencies();
+}
+
+async function fetchCurrencies() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('currencyTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading currencies...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const response = await fetch('/api/active_currency/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.currencies && data.currencies.length > 0) {
+      currenciesData = data.currencies;
+      renderTable();
+    } else {
+      currenciesData = [];
+      renderEmptyTable('No currencies found');
+    }
+
+  } catch (error) {
+    console.error('Error loading currencies:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+    } else {
+      renderEmptyTable('Unable to load currencies. ' + error.message);
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('currencyTableBody');
+
+  tbody.innerHTML = currenciesData.map((currency) => {
+    const currencyName = currency.currency_name || '-';
+    const symbol = currency.symbol || '-';
+    const origin = currency.origin || '-';
+    const currentRate = parseFloat(currency.current_rate || 0).toFixed(2);
+    const serviceCharge = parseFloat(currency.service_charge || 0).toFixed(2);
+    const totalPrice = parseFloat(currency.total_price || 0).toFixed(2);
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-exchange me-2" style="color: var(--accent);"></i>${currencyName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 1.1rem; font-weight: 600;">
+          ${symbol}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <span style="background: var(--page); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--stroke);">
+            ${origin}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600; font-family: monospace;">
+          ${currentRate}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600; font-family: monospace;">
+          ${serviceCharge}
+        </td>
+        <td style="padding: 16px 20px; color: var(--accent); font-size: 0.875rem; font-weight: 700; font-family: monospace;">
+          ${totalPrice}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick='openEditModal(${JSON.stringify(currency)})' 
+            style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;" 
+            title="Edit Currency">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No currencies found') {
+  const tbody = document.getElementById('currencyTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-currency-exchange" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Currencies</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function openEditModal(currency) {
+  currentEditCurrency = currency;
+  
+  document.getElementById('modalCurrencyName').textContent = `Edit ${currency.currency_name}`;
+  document.getElementById('editRate').value = currency.current_rate || 0;
+  document.getElementById('editCharge').value = currency.service_charge || 0;
+  
+  const modal = new bootstrap.Modal(document.getElementById('editCurrencyModal'));
+  modal.show();
+}
+
+function saveCurrency() {
+  const rate = document.getElementById('editRate').value;
+  const charge = document.getElementById('editCharge').value;
+  
+  console.log('Saving:', {
+    currency: currentEditCurrency.currency_name,
+    rate: rate,
+    charge: charge
+  });
+  
+  showToast(`Updated ${currentEditCurrency.currency_name} → Rate: ${rate}, Service Charge: ${charge}`, 'success');
+  
+  const modal = bootstrap.Modal.getInstance(document.getElementById('editCurrencyModal'));
+  modal.hide();
+  
+  // Implement actual API call here
+  // After successful save, refresh the table
+  // fetchCurrencies();
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   `;
-  document.body.appendChild(modal);
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
 }
 
-function closeModal() {
-  const modal = document.querySelector(".modal-backdrop");
-  if (modal) modal.remove();
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 
-/* ===================== SAVE FUNCTION (placeholder) ===================== */
-function saveCurrency(currency) {
-  const rate = document.getElementById("editRate").value;
-  const charge = document.getElementById("editCharge").value;
-  console.log("Saving:", { currency, rate, charge });
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('currencyTable')) {
+    initCurrencyPage();
+  }
+});
 
-  alert(`Updated ${currency} → Rate: ${rate}, Service Charge: ${charge}`);
-  closeModal();
-  // Later: Implement POST/PATCH API to update currency
-}
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#currencyTable')) {
+    setTimeout(initCurrencyPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
 </script>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+</style>

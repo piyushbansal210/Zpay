@@ -1,36 +1,53 @@
-<div class="container-fluid mt-3 px-3">
-  <!-- ====== PAGE HEADER ====== -->
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-    <h4 class="fw-semibold mb-0 text-dark">
-      💱 Active Currency
-    </h4>
-    <button id="refreshBtn" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Active Currency
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage active currencies for Payin and Payout operations</p>
+    </div>
+    <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
       <i class="bi bi-arrow-clockwise"></i> Refresh
     </button>
   </div>
 
-  <!-- ====== CARD ====== -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-body p-3">
-      <h6 class="fw-semibold text-dark mb-3">Active Currency</h6>
+  <!-- Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="position-relative">
+        <input 
+          type="text" 
+          id="searchBox" 
+          class="form-control ps-5" 
+          placeholder="Search by currency name or origin..."
+          style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+        <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+      </div>
+    </div>
+  </div>
 
-      <!-- ====== TABLE ====== -->
+  <!-- Currency Table (Always Visible) -->
+  <div id="currencyTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
       <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead class="bg-light text-muted small border-bottom">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
             <tr>
-              <th>Currency Name</th>
-              <th>Origin</th>
-              <th>Symbol</th>
-              <th>PayOut</th>
-              <th>PayIn</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Currency Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Symbol</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Origin Country</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Payout Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Payin Status</th>
             </tr>
           </thead>
           <tbody id="currencyTableBody">
             <tr>
-              <td colspan="5" class="text-center py-4 text-muted">
-                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
-                Loading currencies...
+              <td colspan="5" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading currencies...</p>
               </td>
             </tr>
           </tbody>
@@ -40,142 +57,299 @@
   </div>
 </div>
 
-<!-- ====== STYLES ====== -->
-<style>
-  body { background-color: #f8f9fc !important; }
-
-  .btn-outline-primary {
-    border-radius: 10px;
-    font-size: 0.85rem;
-    padding: 6px 12px;
-    border: 1px solid #cbd5e1;
-    color: #2563eb;
-    background: #fff;
-  }
-  .btn-outline-primary:hover {
-    background-color: #2563eb;
-    color: #fff;
-  }
-
-  .status-active {
-    color: #16a34a;
-    font-weight: 600;
-  }
-
-  .status-inactive {
-    color: #dc2626;
-    font-weight: 600;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 50px 0;
-    color: #6b7280;
-  }
-
-  .empty-state i {
-    font-size: 2.5rem;
-    color: #9ca3af;
-  }
-</style>
-
-<!-- ====== SCRIPT ====== -->
 <script>
-(function() {
-  // This ensures the script runs even when loaded via HTMX or partial reload
-  function initActiveCurrencyPage() {
-    console.log("%c🌍 Active Currency Page Loaded", "color: #2563eb; font-weight: bold;");
+let currenciesData = [];
+let filteredData = [];
+let isLoading = false;
+const API_TIMEOUT = 5000;
 
-    const refreshBtn = document.getElementById("refreshBtn");
-    const tableBody = document.getElementById("currencyTableBody");
+function initActiveCurrencyPage() {
+  console.log('Initializing Active Currency Page...');
+  setupEventListeners();
+  loadCurrencies();
+}
 
-    if (!tableBody) {
-      console.warn("⚠️ currencyTableBody not found in DOM — retrying...");
-      setTimeout(initActiveCurrencyPage, 500);
-      return;
-    }
-
-    // Initial load
-    loadCurrencies();
-
-    // Define the load function
-    function loadCurrencies() {
-      console.log("%c🔁 Calling API: /easebuzz/active_currency/", "color: #10b981; font-weight: bold;");
-
-      fetch("/easebuzz/active_currency/")
-        .then(res => {
-          console.log("%c📡 API Response Status:", "color: #f59e0b; font-weight: bold;", res.status);
-          return res.json();
-        })
-        .then(data => {
-          console.log("%c✅ API Data Received:", "color: #16a34a; font-weight: bold;", data);
-
-          const currencies = data.currencies || [];
-          tableBody.innerHTML = "";
-
-          if (!currencies.length) {
-            console.warn("%c⚠️ No active currencies found", "color: #f87171; font-weight: bold;");
-            showEmptyState();
-            return;
-          }
-
-          currencies.forEach(c => {
-            const name = c.currency_name || "—";
-            const origin = c.origin || "—";
-            const symbol = c.symbol || "—";
-            const payout = c.payout_status === "Active" ? "Active" : "Inactive";
-            const payin = c.payin_status === "Active" ? "Active" : "Inactive";
-
-            tableBody.insertAdjacentHTML("beforeend", `
-              <tr class="border-bottom">
-                <td>${name}</td>
-                <td>${origin}</td>
-                <td>${symbol}</td>
-                <td class="${payout === 'Active' ? 'status-active' : 'status-inactive'}">${payout}</td>
-                <td class="${payin === 'Active' ? 'status-active' : 'status-inactive'}">${payin}</td>
-              </tr>
-            `);
-          });
-        })
-        .catch(error => {
-          console.error("%c❌ Error calling API:", "color: #dc2626; font-weight: bold;", error);
-          showEmptyState();
-        });
-    }
-
-    // Empty state
-    function showEmptyState() {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center">
-            <div class="empty-state">
-              <i class="bi bi-cash-stack"></i>
-              <p class="fw-semibold mt-2 mb-2">No active currencies found</p>
-              
-            </div>
-          </td>
-        </tr>
-      `;
-      document.getElementById("retryBtn").addEventListener("click", () => {
-        console.log("%c🔁 Retry clicked — reloading currencies", "color: #3b82f6; font-weight: bold;");
-        loadCurrencies();
-      });
-    }
-
-    // Refresh button handler
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", () => {
-        console.log("%c🔁 Refresh button clicked", "color: #3b82f6; font-weight: bold;");
-        loadCurrencies();
-      });
-    }
+function setupEventListeners() {
+  // Search input with debounce
+  let searchTimeout;
+  const searchInput = document.getElementById('searchBox');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterCurrencies();
+      }, 300);
+    });
   }
 
-  // Run after DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initActiveCurrencyPage);
-  } else {
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadCurrencies);
+  }
+}
+
+async function loadCurrencies() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  
+  const tbody = document.getElementById('currencyTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading currencies...</p>
+      </td>
+    </tr>
+  `;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch('/easebuzz/active_currency/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.success === false) {
+      throw new Error(data.message || 'Failed to load currencies');
+    }
+
+    currenciesData = data.currencies || data.data || data.results || [];
+    
+    if (!Array.isArray(currenciesData)) {
+      currenciesData = [];
+    }
+
+    filteredData = [...currenciesData];
+    
+    if (currenciesData.length === 0) {
+      renderEmptyTable();
+    } else {
+      renderTable();
+    }
+
+  } catch (error) {
+    console.error('Error loading currencies:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - No currencies found');
+    } else {
+      renderEmptyTable('Unable to load currencies. ' + error.message);
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('currencyTableBody');
+  
+  if (filteredData.length === 0) {
+    renderEmptyTable('No currencies match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = filteredData.map((currency) => {
+    const name = currency.currency_name || currency.name || 'N/A';
+    const symbol = currency.symbol || currency.currency_symbol || '-';
+    const origin = currency.origin || currency.country || 'Unknown';
+    const payoutStatus = (currency.payout_status || currency.payout || '').toLowerCase();
+    const payinStatus = (currency.payin_status || currency.payin || '').toLowerCase();
+    
+    let payoutBadge = '';
+    if (payoutStatus === 'active' || payoutStatus === 'enabled') {
+      payoutBadge = '<span class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-check-circle-fill me-1"></i>Active</span>';
+    } else {
+      payoutBadge = '<span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-x-circle-fill me-1"></i>Inactive</span>';
+    }
+    
+    let payinBadge = '';
+    if (payinStatus === 'active' || payinStatus === 'enabled') {
+      payinBadge = '<span class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-check-circle-fill me-1"></i>Active</span>';
+    } else {
+      payinBadge = '<span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-x-circle-fill me-1"></i>Inactive</span>';
+    }
+    
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-exchange me-2" style="color: var(--accent);"></i>${name}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 1.2rem; font-weight: 700;">
+          ${symbol}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-globe me-2" style="color: var(--muted);"></i>${origin}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${payoutBadge}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${payinBadge}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No currencies found') {
+  const tbody = document.getElementById('currencyTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-cash-stack" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Active Currencies</p>
+          <p class="mb-3" style="font-size: 0.875rem;">${message}</p>
+          <button class="btn btn-sm" onclick="loadCurrencies()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function filterCurrencies() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  filteredData = currenciesData.filter(currency => {
+    const name = (currency.currency_name || currency.name || '').toLowerCase();
+    const origin = (currency.origin || currency.country || '').toLowerCase();
+    const symbol = (currency.symbol || currency.currency_symbol || '').toLowerCase();
+    
+    return name.includes(searchTerm) || origin.includes(searchTerm) || symbol.includes(searchTerm);
+  });
+
+  renderTable();
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ✅ Handle direct page loads
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('currencyTable')) {
     initActiveCurrencyPage();
   }
-})();
+});
+
+// ✅ Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#currencyTable')) {
+    setTimeout(initActiveCurrencyPage, 50);
+  }
+});
+
+// ✅ Handle HTMX before swap
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
 </script>
+
+<style>
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+/* Form controls focus */
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Button hover effects */
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+
+/* Ensure all corners are rounded */
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+</style>

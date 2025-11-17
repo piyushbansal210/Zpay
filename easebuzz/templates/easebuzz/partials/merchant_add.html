@@ -1,96 +1,206 @@
-<div class="p-4">
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-body">
-      <h4 class="fw-semibold mb-4 d-flex align-items-center gap-2">
-        <i class="bi bi-person-plus text-primary"></i>
-        Add New Merchant
-      </h4>
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Add New Merchant</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Register a new merchant to the ZPay platform</p>
+    </div>
+  </div>
 
+  <!-- Main Card -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 24px;">
+      
       <!-- ================= FORM ================= -->
-      <form id="merchantForm" class="needs-validation" novalidate>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Merchant Name</label>
-            <input type="text" name="merchant_name" class="form-control" placeholder="ABC Retail Pvt Ltd" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Email</label>
-            <input type="email" name="email" class="form-control" placeholder="merchant@example.com" required>
-          </div>
+      <form id="merchantForm" class="needs-validation" novalidate onsubmit="return false;">
 
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Phone</label>
-            <input type="text" name="phone" class="form-control" placeholder="9876543210" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Business Type</label>
-            <input type="text" name="business_type" class="form-control" placeholder="E-commerce / Services" required>
-          </div>
 
-          <div class="col-md-6">
-            <label class="form-label fw-medium">PAN</label>
-            <input type="text" name="pan" class="form-control" placeholder="ABCDE1234F" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">GSTIN</label>
-            <input type="text" name="gstin" class="form-control" placeholder="29ABCDE1234F1Z5">
-          </div>
-
-          <div class="col-md-12">
-            <label class="form-label fw-medium">Address</label>
-            <input type="text" name="address" class="form-control" placeholder="123 MG Road, Bangalore" required>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label fw-medium">City</label>
-            <input type="text" name="city" class="form-control" placeholder="Bangalore" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-medium">State</label>
-            <input type="text" name="state" class="form-control" placeholder="Karnataka" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-medium">Pincode</label>
-            <input type="text" name="pincode" class="form-control" placeholder="560001" required>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Bank Name</label>
-            <input type="text" name="bank_name" class="form-control" placeholder="HDFC Bank" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Account Number</label>
-            <input type="text" name="account_no" class="form-control" placeholder="50123456789" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">IFSC Code</label>
-            <input type="text" name="ifsc_code" class="form-control" placeholder="HDFC0000123" required>
+        
+        <!-- Business Information Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-building" style="color: var(--accent);"></i>
+            Business Information
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Merchant Name <span class="text-danger">*</span></label>
+              <input type="text" name="merchant_name" class="form-control" placeholder="ABC Retail Pvt Ltd" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Business Type <span class="text-danger">*</span></label>
+              <select name="business_type" class="form-select" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+                <option value="">Select business type</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Services">Services</option>
+                <option value="Retail">Retail</option>
+                <option value="Education">Education</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Travel">Travel & Tourism</option>
+                <option value="Food">Food & Beverage</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="text-end mt-4">
-          <button type="submit" class="btn btn-primary px-4 rounded-3">
-            <i class="bi bi-cloud-upload"></i> Add Merchant
+        <!-- Contact Information Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-telephone" style="color: var(--accent);"></i>
+            Contact Information
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Email <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control" placeholder="merchant@example.com" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Phone <span class="text-danger">*</span></label>
+              <input type="text" name="phone" class="form-control" placeholder="9876543210" required pattern="[0-9]{10}"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tax Information Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-file-earmark-text" style="color: var(--accent);"></i>
+            Tax Information
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">PAN <span class="text-danger">*</span></label>
+              <input type="text" name="pan" class="form-control" placeholder="ABCDE1234F" required maxlength="10" style="text-transform: uppercase;"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">GSTIN</label>
+              <input type="text" name="gstin" class="form-control" placeholder="29ABCDE1234F1Z5" maxlength="15" style="text-transform: uppercase;"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-geo-alt" style="color: var(--accent);"></i>
+            Address Information
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Street Address <span class="text-danger">*</span></label>
+              <input type="text" name="address" class="form-control" placeholder="123 MG Road, Koramangala" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">City <span class="text-danger">*</span></label>
+              <input type="text" name="city" class="form-control" placeholder="Bangalore" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">State <span class="text-danger">*</span></label>
+              <input type="text" name="state" class="form-control" placeholder="Karnataka" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Pincode <span class="text-danger">*</span></label>
+              <input type="text" name="pincode" class="form-control" placeholder="560001" required pattern="[0-9]{6}"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Information Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-bank" style="color: var(--accent);"></i>
+            Bank Information
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Bank Name <span class="text-danger">*</span></label>
+              <input type="text" name="bank_name" class="form-control" placeholder="HDFC Bank" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Account Number <span class="text-danger">*</span></label>
+              <input type="text" name="account_no" class="form-control" placeholder="50123456789" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">IFSC Code <span class="text-danger">*</span></label>
+              <input type="text" name="ifsc_code" class="form-control" placeholder="HDFC0000123" required maxlength="11" style="text-transform: uppercase;"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Account Holder Name <span class="text-danger">*</span></label>
+              <input type="text" name="account_holder_name" class="form-control" placeholder="ABC Retail Pvt Ltd" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3" style="border-top: 1px solid var(--stroke);">
+          <button type="reset" class="btn" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 24px;">
+            <i class="bi bi-x-circle"></i> Reset
+          </button>
+          <button type="submit" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+            <i class="bi bi-check-circle"></i> Add Merchant
           </button>
         </div>
       </form>
 
-      <!-- ================= ALERT ================= -->
-      <div id="responseMessage" class="alert mt-4 d-none"></div>
+    </div>
+  </div>
+
+  <!-- Response Modal -->
+  <div class="modal fade" id="responseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+        <div class="modal-body text-center" style="padding: 32px;">
+          <div id="modalIcon" class="mb-3"></div>
+          <h5 id="modalTitle" class="fw-semibold mb-2" style="color: var(--text);"></h5>
+          <p id="modalMessage" class="text-muted mb-4" style="font-size: 0.9rem;"></p>
+          <div id="modalDetails" class="text-start" style="display: none;"></div>
+          <button type="button" class="btn w-100" id="modalCloseBtn" data-bs-dismiss="modal" 
+            style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+// Initialize modal
+const responseModal = new bootstrap.Modal(document.getElementById('responseModal'));
+
 document.getElementById("merchantForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+
+  console.log("🔵 Form Submitted — JS Handler Running");
+
   const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn.innerHTML;
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+
   const formData = Object.fromEntries(new FormData(form));
-  const alertBox = document.getElementById("responseMessage");
-  alertBox.classList.add("d-none");
+  console.log("🟡 Form Data Collected:", formData);
 
   try {
-    const res = await fetch("/api/add-merchant/", {
+    console.log("🟠 Sending Request To Backend /add_merchant/ ...");
+    
+    const res = await fetch("/add_merchant/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -99,15 +209,42 @@ document.getElementById("merchantForm").addEventListener("submit", async functio
       body: JSON.stringify(formData),
     });
 
+    console.log("🟢 Raw Response Object:", res);
+
     const data = await res.json();
-    alertBox.classList.remove("d-none", "alert-danger");
-    alertBox.classList.add("alert-success");
-    alertBox.textContent = "✅ Merchant added successfully!";
-    form.reset();
+    console.log("🟢 Parsed JSON Response:", data);
+
+    if (res.ok) {
+      showResponseModal({
+        type: 'success',
+        title: data.title || 'Merchant Added Successfully!',
+        message: data.message || 'The merchant has been registered successfully to the ZPay platform.',
+        details: data.details
+      });
+
+      form.reset();
+    } else {
+      showResponseModal({
+        type: 'error',
+        title: data.title || 'Failed to Add Merchant',
+        message: data.message || 'There was an error processing your request.',
+        details: data.details || data
+      });
+    }
+
   } catch (err) {
-    alertBox.classList.remove("d-none", "alert-success");
-    alertBox.classList.add("alert-danger");
-    alertBox.textContent = "❌ Error adding merchant.";
+    console.error("❌ Network Error:", err);
+
+    showResponseModal({
+      type: 'error',
+      title: 'Connection Error',
+      message: 'Unable to connect to the server.',
+      details: null
+    });
+
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
   }
 });
 
@@ -125,4 +262,103 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+function showResponseModal(config) {
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalDetails = document.getElementById('modalDetails');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  
+  // Set icon based on type
+  if (config.type === 'success') {
+    modalIcon.innerHTML = '<div style="width: 64px; height: 64px; margin: 0 auto; background: linear-gradient(135deg, #d4f0c0, var(--accent)); border-radius: 50%; display: grid; place-items: center;"><i class="bi bi-check-lg" style="font-size: 32px; color: var(--accent-ink);"></i></div>';
+    modalCloseBtn.style.background = 'var(--accent)';
+    modalCloseBtn.style.color = 'var(--accent-ink)';
+  } else {
+    modalIcon.innerHTML = '<div style="width: 64px; height: 64px; margin: 0 auto; background: linear-gradient(135deg, #ffe5e5, #ff6b6b); border-radius: 50%; display: grid; place-items: center;"><i class="bi bi-x-lg" style="font-size: 32px; color: #c92a2a;"></i></div>';
+    modalCloseBtn.style.background = '#ff6b6b';
+    modalCloseBtn.style.color = 'white';
+  }
+  
+  // Set content
+  modalTitle.textContent = config.title;
+  modalMessage.textContent = config.message;
+  
+  // Handle details
+  if (config.details && Object.keys(config.details).length > 0) {
+    modalDetails.style.display = 'block';
+    modalDetails.innerHTML = '<div style="background: var(--page); border-radius: 10px; padding: 16px; margin-bottom: 16px;">';
+    
+    for (const [key, value] of Object.entries(config.details)) {
+      modalDetails.innerHTML += `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span style="color: var(--muted); font-size: 0.875rem;">${key}:</span>
+          <span style="color: var(--text); font-weight: 600; font-size: 0.875rem;">${value}</span>
+        </div>
+      `;
+    }
+    
+    modalDetails.innerHTML += '</div>';
+  } else {
+    modalDetails.style.display = 'none';
+  }
+  
+  // Show modal
+  responseModal.show();
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Auto-uppercase certain fields
+document.querySelector('input[name="pan"]')?.addEventListener('input', function(e) {
+  e.target.value = e.target.value.toUpperCase();
+});
+document.querySelector('input[name="gstin"]')?.addEventListener('input', function(e) {
+  e.target.value = e.target.value.toUpperCase();
+});
+document.querySelector('input[name="ifsc_code"]')?.addEventListener('input', function(e) {
+  e.target.value = e.target.value.toUpperCase();
+});
 </script>
+
+<style>
+/* Custom form focus styles */
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Smooth transitions */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Required asterisk color */
+.text-danger {
+  color: #ff6b6b !important;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  background-color: rgba(36, 50, 74, 0.6);
+}
+</style>

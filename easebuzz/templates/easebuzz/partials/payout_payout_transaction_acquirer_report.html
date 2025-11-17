@@ -1,0 +1,544 @@
+{% load static %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Acquirer Wise Report
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View comprehensive acquirer statistics and performance metrics</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="loadAcquirerReport()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-8">
+          <label for="dateRangePicker" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-calendar-range me-2" style="color: var(--accent);"></i>Select Date Range
+          </label>
+          <input 
+            type="text" 
+            id="dateRangePicker" 
+            class="form-control" 
+            placeholder="Select date range..."
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg); font-size: 0.9rem;">
+        </div>
+        <div class="col-md-4">
+          <button id="submitBtn" class="btn w-100" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 12px 20px; font-weight: 600;">
+            <i class="bi bi-check-circle me-1"></i> Submit
+          </button>
+        </div>
+      </div>
+      <div id="dateRangeInfo" class="mt-3" style="display: none;">
+        <div class="alert alert-info mb-0" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; border-radius: 10px; padding: 12px;">
+          <i class="bi bi-info-circle me-2"></i>Stats from <strong id="fromDate">-</strong> to <strong id="toDate">-</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acquirer Report Table -->
+  <div id="acquirerReportTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Route Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Merchants on Route</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Total Charges</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Total GST</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Success Rate</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Failed Rate</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Pending Rate</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Total Amount / Count</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-right-radius: 14px;">Success Amount / Count</th>
+            </tr>
+          </thead>
+          <tbody id="acquirerReportTableBody">
+            <tr>
+              <td colspan="9" class="text-center py-5">
+                <div style="color: var(--muted);">
+                  <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Report Data</p>
+                  <p class="mb-0" style="font-size: 0.875rem;">Select a date range and click Submit to view the report</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> routes
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let reportsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let dateRangePicker = null;
+const API_TIMEOUT = 10000;
+
+function initAcquirerReportPage() {
+  console.log('Initializing Acquirer Report Page...');
+  setupDatePicker();
+  setupEventListeners();
+}
+
+function setupDatePicker() {
+  dateRangePicker = flatpickr("#dateRangePicker", {
+    mode: "range",
+    dateFormat: "d/m/Y",
+    maxDate: "today",
+    defaultDate: [
+      new Date(new Date().setDate(new Date().getDate() - 7)),
+      new Date()
+    ],
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length === 2) {
+        updateDateRangeInfo(selectedDates[0], selectedDates[1]);
+      }
+    }
+  });
+
+  // Set initial date range info
+  const defaultDates = dateRangePicker.selectedDates;
+  if (defaultDates.length === 2) {
+    updateDateRangeInfo(defaultDates[0], defaultDates[1]);
+  }
+}
+
+function setupEventListeners() {
+  const submitBtn = document.getElementById('submitBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', loadAcquirerReport);
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadAcquirerReport);
+  }
+}
+
+function updateDateRangeInfo(fromDate, toDate) {
+  const dateRangeInfo = document.getElementById('dateRangeInfo');
+  const fromDateEl = document.getElementById('fromDate');
+  const toDateEl = document.getElementById('toDate');
+
+  if (fromDate && toDate) {
+    fromDateEl.textContent = formatDate(fromDate);
+    toDateEl.textContent = formatDate(toDate);
+    dateRangeInfo.style.display = 'block';
+  } else {
+    dateRangeInfo.style.display = 'none';
+  }
+}
+
+async function loadAcquirerReport() {
+  if (isLoading) return;
+
+  const selectedDates = dateRangePicker.selectedDates;
+  
+  if (selectedDates.length !== 2) {
+    showToast('Please select a valid date range', 'error');
+    return;
+  }
+
+  isLoading = true;
+
+  const submitBtn = document.getElementById('submitBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalSubmitHtml = submitBtn.innerHTML;
+  const originalRefreshHtml = refreshBtn.innerHTML;
+  
+  submitBtn.disabled = true;
+  refreshBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('acquirerReportTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Generating acquirer report...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const fromDate = formatDateForAPI(selectedDates[0]);
+    const toDate = formatDateForAPI(selectedDates[1]);
+
+    const url = `/easebuzz/payout/payout_transaction_acquirer_report/?from_date=${fromDate}&to_date=${toDate}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success !== false && data.reports && data.reports.length > 0) {
+      reportsData = data.reports;
+      filteredData = [...reportsData];
+      renderTable();
+      showToast('Report generated successfully', 'success');
+    } else {
+      reportsData = [];
+      filteredData = [];
+      renderEmptyTable('No report data available for the selected date range');
+    }
+
+  } catch (error) {
+    console.error('Error loading acquirer report:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to generate report. ' + error.message);
+      // showToast('Failed to generate report', 'error');
+    }
+  } finally {
+    isLoading = false;
+    submitBtn.disabled = false;
+    refreshBtn.disabled = false;
+    submitBtn.innerHTML = originalSubmitHtml;
+    refreshBtn.innerHTML = originalRefreshHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('acquirerReportTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No report data available');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((report) => {
+    const routeName = report.route_name || report.routeName || '-';
+    const merchantCount = report.merchant_on_route || report.merchantOnRoute || '0';
+    const totalCharges = report.total_charges || report.totalCharges || '0';
+    const totalGst = report.total_gst || report.totalGst || '0';
+    const successRate = report.success_rate || report.successRate || '0';
+    const failedRate = report.failed_rate || report.failedRate || '0';
+    const pendingRate = report.pending_rate || report.pendingRate || '0';
+    const totalAmountCount = report.total_amount_count || report.totalAmountCount || '-';
+    const successAmountCount = report.success_amount_count || report.successAmountCount || '-';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-signpost me-2" style="color: var(--accent);"></i>${routeName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; text-align: center;">
+          <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            <i class="bi bi-people me-1"></i>${merchantCount}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-rupee" style="color: var(--accent);"></i>${formatAmount(totalCharges)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-rupee" style="color: var(--muted);"></i>${formatAmount(totalGst)}
+        </td>
+        <td style="padding: 16px 20px;">
+          ${getPercentageBadge(successRate, 'success')}
+        </td>
+        <td style="padding: 16px 20px;">
+          ${getPercentageBadge(failedRate, 'danger')}
+        </td>
+        <td style="padding: 16px 20px;">
+          ${getPercentageBadge(pendingRate, 'warning')}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${totalAmountCount}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${successAmountCount}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function getPercentageBadge(percentage, type) {
+  let bgColor, textColor, borderColor, icon;
+  
+  if (type === 'success') {
+    bgColor = '#dcfce7';
+    textColor = '#15803d';
+    borderColor = '#bbf7d0';
+    icon = 'bi-check-circle-fill';
+  } else if (type === 'danger') {
+    bgColor = '#fee2e2';
+    textColor = '#b91c1c';
+    borderColor = '#fecaca';
+    icon = 'bi-x-circle-fill';
+  } else {
+    bgColor = '#ffedd5';
+    textColor = '#c2410c';
+    borderColor = '#fed7aa';
+    icon = 'bi-clock-fill';
+  }
+
+  return `<span class="badge" style="background: ${bgColor}; color: ${textColor}; border: 1px solid ${borderColor}; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi ${icon} me-1"></i>${percentage}%</span>`;
+}
+
+function renderEmptyTable(message = 'No report data found') {
+  const tbody = document.getElementById('acquirerReportTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-file-earmark-bar-graph" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Report Data</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatAmount(amount) {
+  try {
+    return parseFloat(amount).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  } catch (e) {
+    return amount;
+  }
+}
+
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+function formatDateForAPI(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('acquirerReportTable')) {
+    initAcquirerReportPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#acquirerReportTable')) {
+    setTimeout(initAcquirerReportPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+
+/* Flatpickr custom styling */
+.flatpickr-calendar {
+  border-radius: 10px !important;
+  box-shadow: 0 10px 28px rgba(21,32,56,.06) !important;
+}
+
+.flatpickr-day.selected {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.flatpickr-day.selected:hover {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+</style>

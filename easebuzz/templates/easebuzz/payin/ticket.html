@@ -1,2 +1,8 @@
-{% extends "dashboard/base.html" %}
-{% block content %}{% include "easebuzz/partials/payin_ticket.html" %}{% endblock %}
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class='container mt-4'>
+  <h6 class='mb-3 text-success fw-semibold'>ticket.html</h6>
+  {% include 'easebuzz/partials/payin/ticket.html.html' %}
+</div>
+{% endblock %}
