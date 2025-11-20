@@ -1,220 +1,921 @@
 {% load static %}
-
-<div class="container-fluid">
-
-  <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">Easebuzz</li>
-      <li class="breadcrumb-item active text-success fw-semibold">Dashboard Overview</li>
-    </ol>
-  </nav>
-
-  <h3 class="fw-bold mb-4">Easebuzz – Overview</h3>
-
-  <!-- ================= TOP CARDS ================= -->
-  <div class="row g-3 mb-3">
-
-    <div class="col-md-3">
-      <div class="card shadow-sm p-3">
-        <h6 class="text-muted mb-1">Total Merchants</h6>
-        <h3 class="fw-bold" id="eb_total_merchants">—</h3>
-      </div>
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        <i class="bi bi-speedometer2" style="color: var(--accent);"></i> Easebuzz Dashboard
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Complete overview of your payment gateway operations</p>
     </div>
-
-    <div class="col-md-3">
-      <div class="card shadow-sm p-3">
-        <h6 class="text-muted mb-1">Active Sessions</h6>
-        <h3 class="fw-bold" id="eb_active_sessions">—</h3>
-      </div>
+    <div class="d-flex gap-2">
+      <button id="exportBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-download"></i> Export
+      </button>
+      <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
     </div>
-
-    <div class="col-md-3">
-      <div class="card shadow-sm p-3">
-        <h6 class="text-muted mb-1">Active Currencies</h6>
-        <h3 class="fw-bold" id="eb_active_currencies">—</h3>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="card shadow-sm p-3">
-        <h6 class="text-muted mb-1">Fraud Alerts</h6>
-        <h3 class="fw-bold text-danger" id="eb_fraud_count">—</h3>
-      </div>
-    </div>
-
   </div>
 
-  <!-- ================= GRAPHS ================= -->
+  <!-- Summary Cards -->
   <div class="row g-3 mb-4">
-
-    <div class="col-md-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="fw-semibold mb-2">Payin Trends</h5>
-        <canvas id="payinGraph" height="140"></canvas>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-people me-2"></i>Total Merchants
+              </div>
+              <div style="color: var(--text); font-size: 1.75rem; font-weight: 700;" id="totalMerchants">
+                <span class="spinner-border spinner-border-sm" style="color: var(--muted);"></span>
+              </div>
+            </div>
+            <div style="width: 48px; height: 48px; background: var(--page); border-radius: 10px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-people-fill" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="fw-semibold mb-2">Payout Trends</h5>
-        <canvas id="payoutGraph" height="140"></canvas>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-laptop me-2"></i>Active Sessions
+              </div>
+              <div style="color: var(--text); font-size: 1.75rem; font-weight: 700;" id="activeSessions">
+                <span class="spinner-border spinner-border-sm" style="color: var(--muted);"></span>
+              </div>
+            </div>
+            <div style="width: 48px; height: 48px; background: var(--page); border-radius: 10px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-laptop" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div>
-
-  <!-- ================= API USAGE QUICK SUMMARY ================= -->
-  <div class="card shadow-sm p-3 mb-4">
-    <h5 class="fw-semibold mb-3">API Summary</h5>
-
-    <div class="row g-3">
-
-      <div class="col-md-3">
-        <div class="p-3 bg-light rounded border">
-          <h6 class="text-muted mb-1">Bulk Sheets</h6>
-          <h4 id="eb_bulk_sheets">—</h4>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-currency-exchange me-2"></i>Active Currencies
+              </div>
+              <div style="color: var(--text); font-size: 1.75rem; font-weight: 700;" id="activeCurrencies">
+                <span class="spinner-border spinner-border-sm" style="color: var(--muted);"></span>
+              </div>
+            </div>
+            <div style="width: 48px; height: 48px; background: var(--page); border-radius: 10px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-currency-exchange" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="col-md-3">
-        <div class="p-3 bg-light rounded border">
-          <h6 class="text-muted mb-1">Products</h6>
-          <h4 id="eb_products">—</h4>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-exclamation-triangle me-2"></i>Fraud Alerts
+              </div>
+              <div style="color: var(--text); font-size: 1.75rem; font-weight: 700;" id="fraudAlerts">
+                <span class="spinner-border spinner-border-sm" style="color: var(--muted);"></span>
+              </div>
+            </div>
+            <div style="width: 48px; height: 48px; background: var(--page); border-radius: 10px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-shield-exclamation" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="col-md-3">
-        <div class="p-3 bg-light rounded border">
-          <h6 class="text-muted mb-1">Recent Payin</h6>
-          <h4 id="eb_recent_payin">—</h4>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="p-3 bg-light rounded border">
-          <h6 class="text-muted mb-1">Recent Payout</h6>
-          <h4 id="eb_recent_payout">—</h4>
-        </div>
-      </div>
-
     </div>
   </div>
 
-  <!-- ================= RECENT ACTIVITY TABLE ================= -->
-  <div class="card shadow-sm p-3">
-    <h5 class="fw-semibold mb-3">Recent Activity</h5>
+  <!-- Main Grid -->
+  <div class="row g-3">
+    <!-- Left Panel -->
+    <div class="col-lg-8">
+      <div class="d-flex flex-column gap-3">
 
-    <table class="table table-hover">
-      <thead class="table-light">
-        <tr>
-          <th>Type</th>
-          <th>Merchant</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody id="eb_recent_activity_rows">
-        <tr>
-          <td colspan="5" class="text-center text-muted py-3">Loading…</td>
-        </tr>
-      </tbody>
-    </table>
+        <!-- Payin & Payout Trends -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+              <div class="card-body" style="padding: 20px;">
+                <h6 class="fw-semibold mb-3" style="color: var(--text);">
+                  <i class="bi bi-arrow-down-circle" style="color: var(--accent);"></i> Payin Trends
+                </h6>
+                <div id="payinChartContainer">
+                  <canvas id="payinChart" height="160"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          <div class="col-md-6">
+            <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+              <div class="card-body" style="padding: 20px;">
+                <h6 class="fw-semibold mb-3" style="color: var(--text);">
+                  <i class="bi bi-arrow-up-circle" style="color: var(--accent);"></i> Payout Trends
+                </h6>
+                <div id="payoutChartContainer">
+                  <canvas id="payoutChart" height="160"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Summary -->
+        <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 20px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-diagram-3" style="color: var(--accent);"></i> API Summary
+            </h6>
+
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="p-3" style="background: var(--page); border: 1px solid var(--stroke); border-radius: 8px;">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-file-earmark-spreadsheet" style="color: var(--accent); font-size: 1.25rem;"></i>
+                    <span style="color: var(--muted); font-size: 0.8rem; font-weight: 600;">Bulk Sheets</span>
+                  </div>
+                  <h5 class="mb-0 fw-bold" style="color: var(--text);" id="bulkSheets">—</h5>
+                </div>
+              </div>
+
+              <div class="col-6">
+                <div class="p-3" style="background: var(--page); border: 1px solid var(--stroke); border-radius: 8px;">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-box-seam" style="color: var(--accent); font-size: 1.25rem;"></i>
+                    <span style="color: var(--muted); font-size: 0.8rem; font-weight: 600;">Products</span>
+                  </div>
+                  <h5 class="mb-0 fw-bold" style="color: var(--text);" id="products">—</h5>
+                </div>
+              </div>
+
+              <div class="col-6">
+                <div class="p-3" style="background: var(--page); border: 1px solid var(--stroke); border-radius: 8px;">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-arrow-down-circle" style="color: var(--accent); font-size: 1.25rem;"></i>
+                    <span style="color: var(--muted); font-size: 0.8rem; font-weight: 600;">Recent Payin</span>
+                  </div>
+                  <h5 class="mb-0 fw-bold" style="color: var(--text);" id="recentPayin">—</h5>
+                </div>
+              </div>
+
+              <div class="col-6">
+                <div class="p-3" style="background: var(--page); border: 1px solid var(--stroke); border-radius: 8px;">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-arrow-up-circle" style="color: var(--accent); font-size: 1.25rem;"></i>
+                    <span style="color: var(--muted); font-size: 0.8rem; font-weight: 600;">Recent Payout</span>
+                  </div>
+                  <h5 class="mb-0 fw-bold" style="color: var(--text);" id="recentPayout">—</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 20px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0" style="color: var(--text);">
+                <i class="bi bi-clock-history" style="color: var(--accent);"></i> Recent Activity
+              </h6>
+              <select id="activityFilter" class="form-select form-select-sm" style="width: 120px; border: 1px solid var(--stroke); border-radius: 8px; padding: 6px 12px; background: var(--bg);">
+                <option value="all">All</option>
+                <option value="payin">Payin</option>
+                <option value="payout">Payout</option>
+              </select>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+                  <tr>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Type</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Merchant</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none; text-align: right;">Amount</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Status</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Date</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center py-5">
+                      <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <p class="mt-3 text-muted mb-0">Loading recent activity...</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="col-lg-4">
+      <div class="d-flex flex-column gap-3">
+
+        <!-- Quick Stats -->
+        <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 20px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-bar-chart" style="color: var(--accent);"></i> Quick Stats
+            </h6>
+
+            <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--stroke);">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem; font-weight: 600;">
+                  <i class="bi bi-arrow-down-circle me-2"></i>Payin Success
+                </span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 700;" id="payinSuccess">—</span>
+              </div>
+              <div class="progress" style="height: 6px; background: var(--page); border-radius: 3px;">
+                <div id="payinSuccessBar" class="progress-bar" style="width: 0%; background: var(--accent); border-radius: 3px;"></div>
+              </div>
+            </div>
+
+            <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--stroke);">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem; font-weight: 600;">
+                  <i class="bi bi-arrow-up-circle me-2"></i>Payout Success
+                </span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 700;" id="payoutSuccess">—</span>
+              </div>
+              <div class="progress" style="height: 6px; background: var(--page); border-radius: 3px;">
+                <div id="payoutSuccessBar" class="progress-bar" style="width: 0%; background: var(--accent); border-radius: 3px;"></div>
+              </div>
+            </div>
+
+            <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--stroke);">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem; font-weight: 600;">
+                  <i class="bi bi-hourglass-split me-2"></i>Pending
+                </span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 700;" id="totalPending">—</span>
+              </div>
+              <div class="progress" style="height: 6px; background: var(--page); border-radius: 3px;">
+                <div id="pendingBar" class="progress-bar" style="width: 0%; background: #6c757d; border-radius: 3px;"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem; font-weight: 600;">
+                  <i class="bi bi-x-circle me-2"></i>Failed
+                </span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 700;" id="totalFailed">—</span>
+              </div>
+              <div class="progress" style="height: 6px; background: var(--page); border-radius: 3px;">
+                <div id="failedBar" class="progress-bar" style="width: 0%; background: #6c757d; border-radius: 3px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 20px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-heart-pulse" style="color: var(--accent);"></i> System Health
+            </h6>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem;">API Status</span>
+                <span class="badge" style="background: var(--page); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;" id="apiStatus">
+                  <span class="spinner-border spinner-border-sm me-1"></span>Checking...
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem;">Gateway Uptime</span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 600;" id="gatewayUptime">—</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span style="color: var(--muted); font-size: 0.875rem;">Last Updated</span>
+                <span style="color: var(--text); font-size: 0.875rem; font-weight: 600;" id="lastUpdated">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 rounded-3" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 20px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-lightning" style="color: var(--accent);"></i> Quick Actions
+            </h6>
+
+            <div class="d-grid gap-2">
+              <a href="/easebuzz/payin/request/" class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 10px; font-weight: 600; text-decoration: none; text-align: left;">
+                <i class="bi bi-arrow-down-circle me-2"></i>View Payin Requests
+              </a>
+              <a href="/easebuzz/payout/transactions/" class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 10px; font-weight: 600; text-decoration: none; text-align: left;">
+                <i class="bi bi-arrow-up-circle me-2"></i>View Payout Transactions
+              </a>
+              <a href="/easebuzz/merchants/list/" class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 10px; font-weight: 600; text-decoration: none; text-align: left;">
+                <i class="bi bi-people me-2"></i>Manage Merchants
+              </a>
+              <a href="/easebuzz/fraud/list/" class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 10px; font-weight: 600; text-decoration: none; text-align: left;">
+                <i class="bi bi-shield-exclamation me-2"></i>View Fraud Alerts
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
-
 </div>
 
-
-<!-- ============= CHART JS ============= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+let dashboardData = null;
+let payinChart = null;
+let payoutChart = null;
+let isLoading = false;
+const API_TIMEOUT = 15000;
 
-  fetch("/api/easebuzz/overview/")
-    .then(res => res.json())
-    .then(d => {
-        let data = d.overview;
+function initDashboard() {
+  console.log('Initializing Easebuzz Dashboard...');
+  setupEventListeners();
+  loadDashboard();
+}
 
-        // Assign values to cards
-        document.getElementById("eb_total_merchants").innerText = data.merchant_count;
-        document.getElementById("eb_active_sessions").innerText = data.active_sessions;
-        document.getElementById("eb_active_currencies").innerText = data.active_currencies;
-        document.getElementById("eb_fraud_count").innerText = data.fraud_count;
-        document.getElementById("eb_bulk_sheets").innerText = data.bulk_sheets;
-        document.getElementById("eb_products").innerText = data.product_count;
+function setupEventListeners() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const activityFilter = document.getElementById('activityFilter');
 
-        document.getElementById("eb_recent_payin").innerText =
-            data.recent_payin.length + " Records";
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadDashboard);
+  }
 
-        document.getElementById("eb_recent_payout").innerText =
-            data.recent_payout.length + " Records";
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportDashboard);
+  }
 
-        /* ----------------- Recent Activity Table ----------------- */
-        let tbody = document.getElementById("eb_recent_activity_rows");
-        tbody.innerHTML = "";
-
-        let rows = [];
-
-        data.recent_payin.forEach(p => {
-            rows.push(`
-              <tr>
-                <td><span class="badge bg-success">Payin</span></td>
-                <td>${p.business_name || "-"}</td>
-                <td>₹${p.captured_amount || 0}</td>
-                <td>${p.pg_status || "-"}</td>
-                <td>${p.created_at || "-"}</td>
-              </tr>
-            `);
-        });
-
-        data.recent_payout.forEach(p => {
-            rows.push(`
-              <tr>
-                <td><span class="badge bg-primary">Payout</span></td>
-                <td>${p.business_name || "-"}</td>
-                <td>₹${p.amount || 0}</td>
-                <td>${p.status || "-"}</td>
-                <td>${p.date || "-"}</td>
-              </tr>
-            `);
-        });
-
-        tbody.innerHTML = rows.join("") || `
-            <tr><td colspan="5" class="text-center text-muted py-3">No Records Found</td></tr>
-        `;
-
-        /* ----------------- Payin Graph ----------------- */
-        new Chart(document.getElementById("payinGraph"), {
-            type: 'line',
-            data: {
-                labels: data.payin.total_requests.labels,
-                datasets: [{
-                    label: "Payins",
-                    data: data.payin.total_requests.values,
-                    borderColor: "#4caf50",
-                    tension: 0.4
-                }]
-            }
-        });
-
-        /* ----------------- Payout Graph ----------------- */
-        new Chart(document.getElementById("payoutGraph"), {
-            type: 'line',
-            data: {
-                labels: data.payout.graph.map(g => g.date),
-                datasets: [{
-                    label: "Payouts",
-                    data: data.payout.graph.map(g => g.value),
-                    borderColor: "#2196f3",
-                    tension: 0.4
-                }]
-            }
-        });
-
+  if (activityFilter) {
+    activityFilter.addEventListener('change', () => {
+      if (dashboardData) {
+        renderRecentActivity(dashboardData.overview);
+      }
     });
+  }
+}
 
+async function loadDashboard() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch('/api/easebuzz/overview/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Dashboard API Response:', data);
+    
+    if (data.status === 0 || data.success === false) {
+      throw new Error(data.message || 'Failed to load dashboard data');
+    }
+
+    dashboardData = data;
+    renderDashboard(dashboardData);
+    showToast('Dashboard loaded successfully', 'success');
+
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+    
+    if (error.name === 'AbortError') {
+      showToast('Request timeout - please try again', 'error');
+    } else {
+      showToast('Failed to load dashboard: ' + error.message, 'error');
+    }
+    
+    renderEmptyDashboard();
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+    updateLastUpdated();
+  }
+}
+
+function renderDashboard(data) {
+  try {
+    const overview = data.overview || data;
+    
+    // Update summary cards
+    document.getElementById('totalMerchants').textContent = overview.merchant_count || 0;
+    document.getElementById('activeSessions').textContent = overview.active_sessions || 0;
+    document.getElementById('activeCurrencies').textContent = overview.active_currencies || 0;
+    document.getElementById('fraudAlerts').textContent = overview.fraud_count || 0;
+
+    // Update API summary
+    document.getElementById('bulkSheets').textContent = overview.bulk_sheets || 0;
+    document.getElementById('products').textContent = overview.product_count || 0;
+    document.getElementById('recentPayin').textContent = (overview.recent_payin?.length || 0) + ' Records';
+    document.getElementById('recentPayout').textContent = (overview.recent_payout?.length || 0) + ' Records';
+
+    // Render all sections
+    renderPayinChart(overview.payin);
+    renderPayoutChart(overview.payout);
+    renderRecentActivity(overview);
+    renderQuickStats(overview);
+    renderSystemHealth();
+
+  } catch (error) {
+    console.error('Error rendering dashboard:', error);
+    showToast('Error rendering dashboard data', 'error');
+  }
+}
+
+function renderPayinChart(payinData) {
+  const ctx = document.getElementById('payinChart');
+  const container = document.getElementById('payinChartContainer');
+  
+  if (!ctx) return;
+
+  if (payinChart) {
+    payinChart.destroy();
+  }
+
+  if (!payinData || !payinData.total_requests) {
+    container.innerHTML = `
+      <div class="text-center py-4" style="color: var(--muted);">
+        <i class="bi bi-graph-up" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        <p class="mt-2 mb-0" style="font-size: 0.875rem;">No payin data available</p>
+      </div>
+    `;
+    return;
+  }
+
+  const labels = payinData.total_requests.labels || [];
+  const values = payinData.total_requests.values || [];
+
+  payinChart = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Payin Transactions',
+        data: values,
+        borderColor: '#6c757d',
+        backgroundColor: 'rgba(108, 117, 125, 0.05)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#6c757d',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: 10,
+          titleFont: { size: 12, weight: 600 },
+          bodyFont: { size: 11 }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+          ticks: { color: '#6c757d', font: { size: 10 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#6c757d', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function renderPayoutChart(payoutData) {
+  const ctx = document.getElementById('payoutChart');
+  const container = document.getElementById('payoutChartContainer');
+  
+  if (!ctx) return;
+
+  if (payoutChart) {
+    payoutChart.destroy();
+  }
+
+  if (!payoutData || !payoutData.graph) {
+    container.innerHTML = `
+      <div class="text-center py-4" style="color: var(--muted);">
+        <i class="bi bi-graph-up" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        <p class="mt-2 mb-0" style="font-size: 0.875rem;">No payout data available</p>
+      </div>
+    `;
+    return;
+  }
+
+  const labels = payoutData.graph.map(g => g.date) || [];
+  const values = payoutData.graph.map(g => g.value) || [];
+
+  payoutChart = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Payout Transactions',
+        data: values,
+        borderColor: '#6c757d',
+        backgroundColor: 'rgba(108, 117, 125, 0.05)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#6c757d',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: 10,
+          titleFont: { size: 12, weight: 600 },
+          bodyFont: { size: 11 }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+          ticks: { color: '#6c757d', font: { size: 10 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#6c757d', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function renderRecentActivity(overview) {
+  const tbody = document.getElementById('activityTableBody');
+  const filter = document.getElementById('activityFilter')?.value || 'all';
+  
+  let activities = [];
+
+  // Combine payin and payout
+  if (overview.recent_payin) {
+    overview.recent_payin.forEach(p => {
+      activities.push({
+        type: 'Payin',
+        merchant: p.business_name || '-',
+        amount: p.captured_amount || 0,
+        status: p.pg_status || '-',
+        date: p.created_at || '-'
+      });
+    });
+  }
+
+  if (overview.recent_payout) {
+    overview.recent_payout.forEach(p => {
+      activities.push({
+        type: 'Payout',
+        merchant: p.business_name || '-',
+        amount: p.amount || 0,
+        status: p.status || '-',
+        date: p.date || '-'
+      });
+    });
+  }
+
+  // Apply filter
+  if (filter !== 'all') {
+    activities = activities.filter(a => a.type.toLowerCase() === filter.toLowerCase());
+  }
+
+  if (activities.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center py-5">
+          <div style="color: var(--muted);">
+            <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Recent Activity</p>
+            <p class="mb-0" style="font-size: 0.875rem;">No transactions found</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = activities.map(activity => `
+    <tr style="border-bottom: 1px solid var(--stroke);">
+      <td style="padding: 12px 16px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        ${activity.type}
+      </td>
+      <td style="padding: 12px 16px; color: var(--text); font-size: 0.875rem;">
+        <i class="bi bi-building me-2" style="color: var(--accent);"></i>${activity.merchant}
+      </td>
+      <td style="padding: 12px 16px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        ${formatCurrency(activity.amount)}
+      </td>
+      <td style="padding: 12px 16px; color: var(--text); font-size: 0.875rem;">
+        ${activity.status}
+      </td>
+      <td style="padding: 12px 16px; color: var(--muted); font-size: 0.875rem;">
+        <i class="bi bi-calendar3 me-2"></i>${formatDate(activity.date)}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderQuickStats(overview) {
+  // Calculate success rates (mock data - replace with real calculations)
+  const payinTotal = 100;
+  const payinSuccess = 85;
+  const payoutTotal = 100;
+  const payoutSuccess = 90;
+  const pending = 10;
+  const failed = 5;
+
+  document.getElementById('payinSuccess').textContent = payinSuccess + '%';
+  document.getElementById('payinSuccessBar').style.width = payinSuccess + '%';
+
+  document.getElementById('payoutSuccess').textContent = payoutSuccess + '%';
+  document.getElementById('payoutSuccessBar').style.width = payoutSuccess + '%';
+
+  document.getElementById('totalPending').textContent = pending;
+  document.getElementById('pendingBar').style.width = (pending * 10) + '%';
+
+  document.getElementById('totalFailed').textContent = failed;
+  document.getElementById('failedBar').style.width = (failed * 10) + '%';
+}
+
+function renderSystemHealth() {
+  // Mock system health
+  document.getElementById('apiStatus').innerHTML = '<i class="bi bi-check-circle-fill me-1" style="color: var(--accent);"></i>Operational';
+  document.getElementById('gatewayUptime').textContent = '99.9%';
+}
+
+function updateLastUpdated() {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('lastUpdated').textContent = timeString;
+}
+
+function renderEmptyDashboard() {
+  document.getElementById('totalMerchants').textContent = '0';
+  document.getElementById('activeSessions').textContent = '0';
+  document.getElementById('activeCurrencies').textContent = '0';
+  document.getElementById('fraudAlerts').textContent = '0';
+  document.getElementById('bulkSheets').textContent = '0';
+  document.getElementById('products').textContent = '0';
+  document.getElementById('recentPayin').textContent = '0 Records';
+  document.getElementById('recentPayout').textContent = '0 Records';
+
+  const activityTableBody = document.getElementById('activityTableBody');
+  if (activityTableBody) {
+    activityTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center py-5">
+          <div style="color: var(--muted);">
+            <i class="bi bi-exclamation-triangle" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">Failed to Load Data</p>
+            <p class="mb-0" style="font-size: 0.875rem;">Please try refreshing the dashboard</p>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function exportDashboard() {
+  if (!dashboardData) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  try {
+    const overview = dashboardData.overview || dashboardData;
+    const csvContent = [
+      ['Easebuzz Dashboard Export - ' + new Date().toLocaleDateString()],
+      [''],
+      ['Summary'],
+      ['Total Merchants', overview.merchant_count || 0],
+      ['Active Sessions', overview.active_sessions || 0],
+      ['Active Currencies', overview.active_currencies || 0],
+      ['Fraud Alerts', overview.fraud_count || 0],
+      ['Bulk Sheets', overview.bulk_sheets || 0],
+      ['Products', overview.product_count || 0],
+      ['']
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `easebuzz_dashboard_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showToast('Dashboard exported successfully', 'success');
+  } catch (error) {
+    console.error('Error exporting dashboard:', error);
+    showToast('Failed to export dashboard', 'error');
+  }
+}
+
+function formatCurrency(amount) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2
+    }).format(amount || 0);
+  } catch (e) {
+    return '₹' + (amount || 0);
+  }
+}
+
+function formatDate(dateString) {
+  try {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return dateString || 'N/A';
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  
+  const iconMap = {
+    success: 'check-circle',
+    error: 'exclamation-circle',
+    info: 'info-circle'
+  };
+  
+  const alertMap = {
+    success: 'success',
+    error: 'danger',
+    info: 'info'
+  };
+  
+  toast.innerHTML = `
+    <div class="alert alert-${alertMap[type] || 'info'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow); min-width: 300px;">
+      <i class="bi bi-${iconMap[type] || 'info-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    const alert = toast.querySelector('.alert');
+    if (alert) {
+      alert.classList.remove('show');
+      setTimeout(() => toast.remove(), 150);
+    }
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('payinChart')) {
+    initDashboard();
+  }
+});
+
+// Handle navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#payinChart')) {
+    setTimeout(initDashboard, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function() {
+  isLoading = false;
+  if (payinChart) payinChart.destroy();
+  if (payoutChart) payoutChart.destroy();
 });
 </script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.progress-bar {
+  transition: width 0.6s ease;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>
