@@ -1,51 +1,26 @@
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-white"
-    style="width: 280px; height: 100vh; border-right: 1px solid #e5e7eb;">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-        <i class="bi bi-shop fs-4 me-2" style="color: var(--accent);"></i>
-        <span class="fs-4 fw-bold">{{ merchant.merchant_name }}</span>
-    </a>
-    <hr>
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item">
-            <a href="{% url 'merchant_chat' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'merchant_chat' %}active{% else %}link-dark{% endif %}"
-                aria-current="page">
-                <i class="bi bi-chat-dots me-2"></i>
-                Chat with Admin
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'merchant_transactions' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'merchant_transactions' %}active{% else %}link-dark{% endif %}">
-                <i class="bi bi-receipt me-2"></i>
-                Show Transactions
-            </a>
-        </li>
-    </ul>
-    <hr>
-    <div class="dropdown">
-        <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2"
-            data-bs-toggle="dropdown" aria-expanded="false">
-            <div class="rounded-circle me-2 d-flex align-items-center justify-content-center bg-secondary text-white"
-                style="width: 32px; height: 32px;">
-                {{ merchant.merchant_name.0|upper }}
-            </div>
-            <strong>{{ merchant.merchant_name }}</strong>
-        </a>
-        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2">
-            <li><a class="dropdown-item" href="/merchant/logout/">Sign out</a></li>
-        </ul>
+<!-- Brand -->
+<a href="/">
+    <div class="brand">
+        <i class="bi bi-shop"></i><span>{{ merchant.merchant_name }}</span>
     </div>
-</div>
+</a>
 
-<style>
-    .nav-pills .nav-link.active,
-    .nav-pills .show>.nav-link {
-        background-color: var(--accent);
-        color: var(--accent-ink);
-    }
+<nav class="sb-nav">
 
-    .nav-link:hover:not(.active) {
-        background-color: #f8f9fa;
-    }
-</style>
+    <!-- Chat -->
+    <a href="{% url 'merchant_chat' %}"
+        class="sb-link {% if request.resolver_match.url_name == 'merchant_chat' %}active{% endif %}">
+        <i class="bi bi-chat-dots"></i>
+        <span>Chat with Admin</span>
+    </a>
+
+    <!-- Transactions -->
+    <a href="{% url 'merchant_transactions' %}"
+        class="sb-link {% if request.resolver_match.url_name == 'merchant_transactions' %}active{% endif %}">
+        <i class="bi bi-receipt"></i>
+        <span>Show Transactions</span>
+    </a>
+
+</nav>
+
+<footer class="sb-footer">© 2025 ZPay</footer>
