@@ -174,6 +174,98 @@
   <button class="sb-btn" data-sb-toggle="#sb-payu" aria-expanded="false">
     <i class="bi bi-credit-card-2-front"></i><span>PayU</span><i class="bi bi-chevron-right sb-arrow"></i>
   </button>
+
+  <!-- This should be added to your sidebar template -->
+<!-- Find the section where menu items are listed and add this chat menu item -->
+
+<style>
+.unread-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #ff4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+</style>
+
+<!-- Add this menu item in your sidebar navigation -->
+<li class="nav-item">
+  <a class="nav-link {% if request.path == '/dashboard/chat/' %}active{% endif %}" 
+     href="/dashboard/chat/"
+     style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 10px; transition: all 0.2s; position: relative;">
+    <i class="bi bi-chat-dots-fill" style="font-size: 1.1rem;"></i>
+    <span>Merchant Chat</span>
+    {% if unread_messages_count > 0 %}
+    <span class="unread-badge">{{ unread_messages_count }}</span>
+    {% endif %}
+  </a>
+</li>
+
+<!-- OR if you want it as a complete sidebar section, use this: -->
+
+<!-- CHAT SECTION -->
+<div class="sidebar-section mt-3">
+  <small class="text-muted px-3" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+    Communication
+  </small>
+  <ul class="nav flex-column mt-2">
+    <li class="nav-item">
+      <a class="nav-link {% if request.path == '/dashboard/chat/' %}active{% endif %}" 
+         href="/dashboard/chat/"
+         style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 10px; transition: all 0.2s; position: relative;">
+        <i class="bi bi-chat-dots-fill" style="font-size: 1.1rem; color: var(--accent);"></i>
+        <span style="font-weight: 500;">Merchant Chat</span>
+        {% if unread_messages_count > 0 %}
+        <span class="unread-badge">{{ unread_messages_count }}</span>
+        {% endif %}
+      </a>
+    </li>
+  </ul>
+</div>
+
+<script>
+// Optional: Add this script to periodically check for new messages
+// This creates a simple polling mechanism (not real-time, but functional)
+function checkNewMessages() {
+  fetch('/api/chat/unread-count/')
+    .then(response => response.json())
+    .then(data => {
+      const badge = document.querySelector('.unread-badge');
+      if (data.count > 0) {
+        if (badge) {
+          badge.textContent = data.count;
+        } else {
+          // Create badge if it doesn't exist
+          const chatLink = document.querySelector('[href="/dashboard/chat/"]');
+          if (chatLink) {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'unread-badge';
+            newBadge.textContent = data.count;
+            chatLink.appendChild(newBadge);
+          }
+        }
+      } else {
+        if (badge) {
+          badge.remove();
+        }
+      }
+    })
+    .catch(error => console.error('Error checking messages:', error));
+}
+
+// Check every 30 seconds
+setInterval(checkNewMessages, 30000);
+</script>
   <!-- <div id="sb-payu" class="sb-sub">
     <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-speedometer2"></i> Dashboard</a>
     <a class="sb-link" hx-get="/easebuzz/product/transaction/" hx-target="#content" hx-push-url="true"><i class="bi bi-people"></i> Merchants</a>

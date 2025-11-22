@@ -14,8 +14,6 @@
       <!-- ================= FORM ================= -->
       <form id="merchantForm" class="needs-validation" novalidate onsubmit="return false;">
 
-
-        
         <!-- Business Information Section -->
         <div class="mb-4">
           <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
@@ -64,6 +62,37 @@
                 style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
             </div>
           </div>
+        </div>
+
+        <!-- Login Credentials Section -->
+        <div class="mb-4">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+            <i class="bi bi-key-fill" style="color: var(--accent);"></i>
+            Login Credentials
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password" id="passwordField" name="password" class="form-control" placeholder="Enter password" required minlength="6"
+                  style="border: 1px solid var(--stroke); border-radius: 10px 0 0 10px; padding: 10px 14px; background: var(--bg);">
+                <button type="button" class="btn" onclick="togglePassword()" style="border: 1px solid var(--stroke); border-left: none; border-radius: 0 10px 10px 0; background: var(--bg);">
+                  <i class="bi bi-eye" id="toggleIcon"></i>
+                </button>
+              </div>
+              <small class="text-muted" style="font-size: 0.75rem;">Minimum 6 characters</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium" style="color: var(--text); font-size: 0.875rem;">Confirm Password <span class="text-danger">*</span></label>
+              <input type="password" id="confirmPasswordField" name="confirm_password" class="form-control" placeholder="Re-enter password" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            </div>
+          </div>
+          <!-- <div class="mt-2">
+            <small class="text-muted" style="font-size: 0.75rem;">
+              <i class="bi bi-info-circle"></i> The merchant will use their email and this password to login at <strong>/merchant/login/</strong>
+            </small>
+          </div> -->
         </div>
 
         <!-- Tax Information Section -->
@@ -184,8 +213,16 @@
 const responseModal = new bootstrap.Modal(document.getElementById('responseModal'));
 
 document.getElementById("merchantForm").addEventListener("submit", async function (e) {
-
   console.log("🔵 Form Submitted — JS Handler Running");
+
+  // Validate passwords match
+  const password = document.getElementById('passwordField').value;
+  const confirmPassword = document.getElementById('confirmPasswordField').value;
+  
+  if (password !== confirmPassword) {
+    alert('Passwords do not match! Please check and try again.');
+    return;
+  }
 
   const form = e.target;
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -198,9 +235,9 @@ document.getElementById("merchantForm").addEventListener("submit", async functio
   console.log("🟡 Form Data Collected:", formData);
 
   try {
-    console.log("🟠 Sending Request To Backend /add_merchant/ ...");
+    console.log("🟠 Sending Request To Backend /api/add-merchant/ ...");
     
-    const res = await fetch("/add_merchant/", {
+    const res = await fetch("/api/add-merchant/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -247,6 +284,21 @@ document.getElementById("merchantForm").addEventListener("submit", async functio
     submitBtn.innerHTML = originalBtnText;
   }
 });
+
+function togglePassword() {
+  const passwordField = document.getElementById('passwordField');
+  const toggleIcon = document.getElementById('toggleIcon');
+  
+  if (passwordField.type === 'password') {
+    passwordField.type = 'text';
+    toggleIcon.classList.remove('bi-eye');
+    toggleIcon.classList.add('bi-eye-slash');
+  } else {
+    passwordField.type = 'password';
+    toggleIcon.classList.remove('bi-eye-slash');
+    toggleIcon.classList.add('bi-eye');
+  }
+}
 
 function getCookie(name) {
   let cookieValue = null;
@@ -306,21 +358,6 @@ function showResponseModal(config) {
   
   // Show modal
   responseModal.show();
-}
-
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + "=")) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
 }
 
 // Auto-uppercase certain fields

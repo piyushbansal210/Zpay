@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat - {{ merchant.merchant_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --accent: #84c340;
+      --accent-ink: #1a1a1a;
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --stroke: #e5e7eb;
+      --page: #f9fafb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--page);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .navbar {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 12px 20px;
+    }
+    
+    .chat-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 70px);
+      background: white;
+      margin: 0;
+    }
+    
+    .chat-header {
+      background: linear-gradient(135deg, var(--accent) 0%, #6fa830 100%);
+      padding: 20px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .messages-area {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--page);
+    }
+    
+    .message-input-area {
+      background: white;
+      border-top: 1px solid var(--stroke);
+      padding: 20px;
+    }
+    
+    .message-bubble {
+      margin-bottom: 16px;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1);
+    }
+    
+    .btn-send {
+      background: var(--accent);
+      border: none;
+      color: var(--accent-ink);
+      padding: 12px 24px;
+      font-weight: 600;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    
+    .btn-send:hover {
+      background: #6fa830;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(132, 195, 64, 0.3);
+    }
+    
+    .btn-send:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">
+        <i class="bi bi-shop" style="color: var(--accent);"></i>
+        <strong>{{ merchant.merchant_name }}</strong>
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <span class="badge" style="background: {% if merchant.is_active %}var(--accent){% else %}#ff6b6b{% endif %}; color: {% if merchant.is_active %}var(--accent-ink){% else %}white{% endif %}; padding: 8px 12px;">
+          {{ merchant.prepaid_status }}
+        </span>
+        <a href="/merchant/logout/" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Chat Container -->
+  <div class="chat-container">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); display: grid; place-items: center;">
+          <i class="bi bi-headset" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+          <h5 class="mb-0">Admin Support</h5>
+          <small class="opacity-90">We're here to help you</small>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Messages Area -->
+    <div class="messages-area" id="messages-container">
+      {% if messages %}
+        {% for message in messages %}
+        <div class="message-bubble d-flex {% if message.is_from_admin %}justify-content-start{% else %}justify-content-end{% endif %}">
+          <div style="max-width: 70%; padding: 14px 18px; border-radius: 18px; {% if message.is_from_admin %}background: white; color: var(--text); border: 1px solid var(--stroke);{% else %}background: var(--accent); color: var(--accent-ink);{% endif %}">
+            {% if message.is_from_admin %}
+            <strong style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--accent);">
+              <i class="bi bi-shield-check"></i> Admin
+            </strong>
+            {% endif %}
+            <p class="mb-1" style="font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap;">{{ message.message }}</p>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="opacity-75" style="font-size: 0.75rem;">
+                {{ message.created_at|date:"h:i A, M d" }}
+              </small>
+              {% if not message.is_from_admin and message.is_read %}
+              <i class="bi bi-check-all ms-2" style="font-size: 0.9rem;" title="Read by admin"></i>
+              {% elif not message.is_from_admin %}
+              <i class="bi bi-check ms-2" style="font-size: 0.9rem;" title="Sent"></i>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center" style="margin-top: 100px;">
+          <i class="bi bi-chat-dots" style="font-size: 4rem; color: var(--muted);"></i>
+          <p class="text-muted mt-3" style="font-size: 1.1rem;">No messages yet</p>
+          <p class="text-muted">Send a message to start the conversation!</p>
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- Message Input Area -->
+    <div class="message-input-area">
+      <div class="input-group">
+        <textarea 
+          id="messageInput" 
+          class="form-control" 
+          placeholder="Type your message..." 
+          rows="2"
+          style="border-radius: 12px; resize: none; padding: 14px; background: var(--page);"></textarea>
+        <button 
+          id="sendBtn"
+          onclick="sendMessage()" 
+          class="btn btn-send ms-2">
+          <i class="bi bi-send-fill"></i> Send
+        </button>
+      </div>
+      <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">
+        <i class="bi bi-info-circle"></i> Press Enter to send, Shift+Enter for new line
+      </small>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+      
+      fetch('/merchant/chat/send/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message: message })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          input.value = '';
+          appendMessage(data.message);
+          scrollToBottom();
+        } else {
+          alert('Failed to send message: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      })
+      .finally(() => {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+        input.focus();
+      });
+    }
+    
+    function appendMessage(msg) {
+      const messagesContainer = document.getElementById('messages-container');
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message-bubble d-flex justify-content-end';
+      messageDiv.innerHTML = `
+        <div style="max-width: 70%; padding: 14px 18px; border-radius: 18px; background: var(--accent); color: var(--accent-ink);">
+          <p class="mb-1" style="font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap;">${msg.text}</p>
+          <div class="d-flex justify-content-between align-items-center mt-1">
+            <small class="opacity-75" style="font-size: 0.75rem;">${msg.created_at}</small>
+            <i class="bi bi-check ms-2" style="font-size: 0.9rem;" title="Sent"></i>
+          </div>
+        </div>
+      `;
+      
+      messagesContainer.appendChild(messageDiv);
+    }
+    
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    
+    // Handle Enter key
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // Auto-scroll to bottom on load
+    window.addEventListener('load', scrollToBottom);
+  </script>
+</body>
+</html>

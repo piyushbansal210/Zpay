@@ -12,6 +12,309 @@ EASEBUZZ_KEY = "3GEV07NS8T"
 EASEBUZZ_SALT = "4C486ZG6LO"
 EASEBUZZ_BASE_URL = "https://dashboard.easebuzz.in/partner/v1"
 
+# Update your apis/views.py add_merchant function with this code
+
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from easebuzz.models import Merchant
+
+@api_view(["POST"])
+def add_merchant(request):
+    print("\n================= ADD MERCHANT API CALLED =================")
+
+    data = request.data
+
+    required_fields = [
+        "merchant_name", "email", "phone", "business_type", "pan", "gstin",
+        "address", "city", "state", "pincode", "bank_name", "account_no",
+        "ifsc_code", "password"
+    ]
+
+    # Check missing
+    for field in required_fields:
+        if not data.get(field):
+            return Response(
+                {"title": "Missing Field", "message": f"Missing required field: {field}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    email = data["email"]
+    username = email  # you can change later
+    password = data["password"]
+
+    # ============================
+    # 1) CREATE DJANGO LOGIN USER
+    # ============================
+    if User.objects.filter(username=username).exists():
+        return Response(
+            {"message": "Merchant already exists in auth_user"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    django_user = User.objects.create(
+        username=username,
+        email=email,
+        password=make_password(password),
+        is_active=True
+    )
+
+    # ============================
+    # 2) CREATE MERCHANT ENTRY
+    # ============================
+    merchant = Merchant.objects.create(
+        username=username,
+        merchant_name=data["merchant_name"],
+        email=email,
+        phone=data["phone"],
+        business_type=data["business_type"],
+        pan=data["pan"],
+        gstin=data["gstin"],
+        address=data["address"],
+        city=data["city"],
+        state=data["state"],
+        pincode=data["pincode"],
+        bank_name=data["bank_name"],
+        account_no=data["account_no"],
+        ifsc_code=data["ifsc_code"],
+    )
+
+    return Response(
+        {
+            "message": "Merchant created successfully.",
+            "merchant_id": merchant.id,
+            "auth_user_id": django_user.id
+        },
+        status=status.HTTP_201_CREATED
+    )
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Q, Count, Max, Prefetch
+from django.utils import timezone
+from django.views.decorators.http import require_http_methods
+import json
+
+from easebuzz.models import Merchant, ChatMessage
+from django.contrib.auth.models import User
+
+
+# ==================== ADMIN CHAT VIEWS ====================
+
+@login_required(login_url='/auth/login/')
+def admin_chat_list(request):
+    """Admin view: List all merchants with their last message"""
+    if not request.user.is_staff:
+        return redirect('/merchant/chat/')
+    
+    # Get all merchants with their last message
+    merchants = Merchant.objects.filter(
+        is_active=True
+    ).annotate(
+        unread_count=Count('chat_messages', filter=Q(chat_messages__is_read=False, chat_messages__is_from_admin=False)),
+        last_message_time=Max('chat_messages__created_at')
+    ).order_by('-last_message_time', '-created_at')
+    
+    # Get last message for each merchant
+    for merchant in merchants:
+        last_msg = merchant.chat_messages.last()
+        merchant.last_message = last_msg.message[:50] + '...' if last_msg and len(last_msg.message) > 50 else (last_msg.message if last_msg else 'No messages yet')
+        merchant.last_message_time_display = last_msg.created_at if last_msg else merchant.created_at
+    
+    context = {
+        'merchants': merchants,
+        'active_merchant_id': request.GET.get('merchant_id'),
+    }
+    
+    return render(request, 'dashboard/pages/admin_chat.html', context)
+
+
+@login_required(login_url='/auth/login/')
+def admin_chat_conversation(request, merchant_id):
+    """Admin view: View conversation with a specific merchant"""
+    if not request.user.is_staff:
+        return redirect('/merchant/chat/')
+    
+    merchant = get_object_or_404(Merchant, id=merchant_id)
+    
+    # Get all messages for this merchant
+    messages = ChatMessage.objects.filter(merchant=merchant).select_related('sender')
+    
+    # Mark merchant's messages as read
+    merchant_messages = messages.filter(is_from_admin=False, is_read=False)
+    for msg in merchant_messages:
+        msg.mark_as_read()
+    
+    context = {
+        'merchant': merchant,
+        'messages': messages,
+    }
+    
+    return render(request, 'dashboard/partials/chat_conversation.html', context)
+
+
+@login_required(login_url='/auth/login/')
+@require_http_methods(["POST"])
+def admin_send_message(request):
+    """API: Admin sends message to merchant"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        merchant_id = data.get('merchant_id')
+        message_text = data.get('message', '').strip()
+        
+        if not message_text:
+            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        
+        merchant = get_object_or_404(Merchant, id=merchant_id)
+        
+        # Create message
+        chat_message = ChatMessage.objects.create(
+            merchant=merchant,
+            sender=request.user,
+            receiver=merchant.user,
+            message=message_text,
+            is_from_admin=True,
+            is_read=False
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': chat_message.id,
+                'text': chat_message.message,
+                'sender': request.user.get_full_name() or request.user.username,
+                'created_at': chat_message.created_at.strftime('%I:%M %p'),
+                'is_from_admin': True
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ==================== MERCHANT CHAT VIEWS ====================
+
+@login_required(login_url='/merchant/login/')
+def merchant_chat_view(request):
+    """Merchant view: Chat with admin"""
+    if request.user.is_staff:
+        return redirect('/dashboard/chat/')
+    
+    try:
+        merchant = Merchant.objects.get(user=request.user)
+    except Merchant.DoesNotExist:
+        return render(request, 'merchant/error.html', {
+            'error': 'Merchant profile not found. Please contact admin.'
+        })
+    
+    # Get all messages for this merchant
+    messages = ChatMessage.objects.filter(merchant=merchant).select_related('sender')
+    
+    # Mark admin messages as read
+    admin_messages = messages.filter(is_from_admin=True, is_read=False)
+    for msg in admin_messages:
+        msg.mark_as_read()
+    
+    context = {
+        'merchant': merchant,
+        'messages': messages,
+        'unread_count': 0  # Already marked as read
+    }
+    
+    return render(request, 'merchant/chat.html', context)
+
+
+@login_required(login_url='/merchant/login/')
+@require_http_methods(["POST"])
+def merchant_send_message(request):
+    """API: Merchant sends message to admin"""
+    if request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        merchant = Merchant.objects.get(user=request.user)
+        
+        data = json.loads(request.body)
+        message_text = data.get('message', '').strip()
+        
+        if not message_text:
+            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        
+        # Create message (receiver will be any admin, or we can set to None)
+        chat_message = ChatMessage.objects.create(
+            merchant=merchant,
+            sender=request.user,
+            receiver=None,  # Any admin can see
+            message=message_text,
+            is_from_admin=False,
+            is_read=False
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': chat_message.id,
+                'text': chat_message.message,
+                'sender': merchant.merchant_name,
+                'created_at': chat_message.created_at.strftime('%I:%M %p'),
+                'is_from_admin': False
+            }
+        })
+        
+    except Merchant.DoesNotExist:
+        return JsonResponse({'error': 'Merchant profile not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ==================== MERCHANT AUTH VIEWS ====================
+
+def merchant_login_view(request):
+    """Merchant login page"""
+    from django.contrib.auth import authenticate, login
+    from django.contrib import messages
+    
+    if request.user.is_authenticated and not request.user.is_staff:
+        return redirect('/merchant/chat/')
+    
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None and not user.is_staff:
+            login(request, user)
+            return redirect('/merchant/chat/')
+        else:
+            messages.error(request, "Invalid credentials or you don't have merchant access.")
+    
+    return render(request, "merchant/login.html")
+
+
+def merchant_logout_view(request):
+    """Merchant logout"""
+    from django.contrib.auth import logout
+    logout(request)
+    return redirect('/merchant/login/')
+
+
+@login_required(login_url='/merchant/login/')
+def merchant_dashboard(request):
+    """Merchant dashboard - redirect to chat for now"""
+    if request.user.is_staff:
+        return redirect('/dashboard/')
+    
+    return redirect('/merchant/chat/')
+
 # ==============================
 # UTILITY FUNCTIONS
 # ==============================
@@ -53,62 +356,191 @@ def make_request(url, payload, method="POST", headers=None):
 # ADD MERCHANT (Sub-merchant Onboarding)
 # ==============================
 
-@api_view(["POST"])
+# Update your apis/views.py add_merchant function with this code
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
+from easebuzz.models import Merchant
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+
+
+@require_http_methods(["POST"])
 def add_merchant(request):
-    print("\n================= ADD MERCHANT API CALLED =================")
-
+    """
+    Add a new merchant with custom password - saves to database even if there are validation errors
+    """
     try:
-        print("Incoming Raw Body:", request.body)
-        print("Parsed Request Data:", request.data)
-
-        data = request.data
-
-        required_fields = [
-            "merchant_name", "email", "phone", "business_type", "pan", "gstin",
-            "address", "city", "state", "pincode", "bank_name", "account_no", "ifsc_code"
-        ]
-
-        payload = {"key": EASEBUZZ_KEY}
-
-        # Validate fields
-        for field in required_fields:
-            value = data.get(field)
-            if not value:
-                print(f"❌ Missing field: {field}")
-                return Response(
-                    {"title": "Missing Field", "message": f"Missing required field: {field}"},
-                    status=status.HTTP_400_BAD_REQUEST
+        data = json.loads(request.body)
+        
+        # Extract data from request
+        merchant_name = data.get('merchant_name', '')
+        business_type = data.get('business_type', '')
+        email = data.get('email', '')
+        phone = data.get('phone', '')
+        password = data.get('password', '')
+        confirm_password = data.get('confirm_password', '')
+        pan = data.get('pan', '')
+        gstin = data.get('gstin', '')
+        address = data.get('address', '')
+        city = data.get('city', '')
+        state = data.get('state', '')
+        pincode = data.get('pincode', '')
+        bank_name = data.get('bank_name', '')
+        account_no = data.get('account_no', '')
+        ifsc_code = data.get('ifsc_code', '')
+        account_holder_name = data.get('account_holder_name', '')
+        
+        # Collect validation errors but still proceed
+        errors = []
+        warnings = []
+        
+        # Check for required fields
+        if not merchant_name:
+            errors.append("Merchant name is required")
+        if not email:
+            errors.append("Email is required")
+        if not password:
+            errors.append("Password is required")
+            password = 'merchant@123'  # Set default if not provided
+        if password and confirm_password and password != confirm_password:
+            errors.append("Passwords do not match")
+            
+        # Validate password strength
+        if password and len(password) < 6:
+            errors.append("Password must be at least 6 characters")
+        
+        # Check if email already exists
+        if email and Merchant.objects.filter(email=email).exists():
+            warnings.append(f"Email {email} already exists - updating existing merchant")
+            merchant = Merchant.objects.get(email=email)
+            merchant.merchant_name = merchant_name or merchant.merchant_name
+            merchant.business_type = business_type or merchant.business_type
+            merchant.phone = phone or merchant.phone
+            merchant.pan = pan or merchant.pan
+            merchant.gstin = gstin or merchant.gstin
+            merchant.address = address or merchant.address
+            merchant.city = city or merchant.city
+            merchant.state = state or merchant.state
+            merchant.pincode = pincode or merchant.pincode
+            merchant.bank_name = bank_name or merchant.bank_name
+            merchant.account_no = account_no or merchant.account_no
+            merchant.ifsc_code = ifsc_code or merchant.ifsc_code
+            merchant.account_holder_name = account_holder_name or merchant.account_holder_name
+            merchant.save()
+            
+            # Update user password if provided
+            if merchant.user and password:
+                merchant.user.set_password(password)
+                merchant.user.save()
+        else:
+            # Create new merchant even if there are some errors
+            merchant = Merchant.objects.create(
+                merchant_name=merchant_name or 'Unnamed Merchant',
+                business_type=business_type,
+                email=email or f'merchant{Merchant.objects.count() + 1}@temp.com',
+                phone=phone,
+                pan=pan.upper() if pan else '',
+                gstin=gstin.upper() if gstin else '',
+                address=address,
+                city=city,
+                state=state,
+                pincode=pincode,
+                bank_name=bank_name,
+                account_no=account_no,
+                ifsc_code=ifsc_code.upper() if ifsc_code else '',
+                account_holder_name=account_holder_name,
+                is_active=True,
+                prepaid_status='Active'
+            )
+        
+        # Generate username from email
+        if email:
+            username = email.split('@')[0]
+        else:
+            username = f'merchant{merchant.id}'
+        
+        # Create or update user account
+        if merchant.user:
+            user = merchant.user
+            user.email = merchant.email
+            if password:
+                user.set_password(password)
+            user.save()
+        else:
+            try:
+                # Check if username already exists
+                if User.objects.filter(username=username).exists():
+                    username = f"{username}{merchant.id}"
+                
+                user = User.objects.create_user(
+                    username=username,
+                    email=merchant.email,
+                    password=password or 'merchant@123',  # Use provided password or default
+                    first_name=merchant.merchant_name.split()[0] if merchant.merchant_name else 'Merchant',
                 )
-            payload[field] = value
-
-        # Hash (VERY IMPORTANT → order must match Easebuzz)
-        payload["hash"] = generate_hash(payload, required_fields)
-
-        print("Generated Hash:", payload["hash"])
-        print("Final Payload Sent To Easebuzz:", payload)
-
-        url = f"{EASEBUZZ_BASE_URL}/merchant_onboard"
-        print("Easebuzz URL:", url)
-
-        # Make API request
-        result, status_code = make_request(url, payload, "POST")
-
-        print("Easebuzz Response:", result)
-        print("================= END MERCHANT API =================\n")
-
-        # Return unified JSON response to frontend
-        return Response({
-            "title": "Merchant Created",
-            "message": "Merchant was successfully onboarded to Easebuzz.",
-            "details": result
-        }, status=status_code)
-
+                user.is_staff = False
+                user.is_active = True
+                user.save()
+                
+                merchant.user = user
+                merchant.save()
+            except Exception as user_error:
+                warnings.append(f"User creation failed: {str(user_error)}")
+        
+        # Prepare response
+        response_data = {
+            'title': 'Merchant Added Successfully!' if not errors else 'Merchant Added with Warnings',
+            'message': 'The merchant has been registered to the ZPay platform. Login credentials have been created.',
+            'details': {
+                'Merchant ID': merchant.id,
+                'Merchant Name': merchant.merchant_name,
+                'Email': merchant.email,
+                'Phone': merchant.phone or 'Not provided',
+                'Login Username': username,
+                'Login Email': email,
+                'Password': '********' if password else 'merchant@123',
+                'Status': merchant.prepaid_status,
+                'Login URL': '/merchant/login/'
+            }
+        }
+        
+        # Add notes section
+        notes = []
+        notes.append(f"Merchant can login at /merchant/login/ using:")
+        notes.append(f"• Username: {username} OR Email: {email}")
+        notes.append(f"• Password: (as set during creation)")
+        
+        if warnings:
+            response_data['warnings'] = warnings
+            notes.extend(warnings)
+        if errors:
+            response_data['errors'] = errors
+            notes.extend(errors)
+        
+        response_data['notes'] = ' | '.join(notes)
+        
+        return JsonResponse(response_data, status=200)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'title': 'Invalid Data',
+            'message': 'Invalid JSON data received',
+            'details': {}
+        }, status=400)
+        
     except Exception as e:
-        print("❌ ERROR IN add_merchant:", str(e))
-        return Response(
-            {"title": "Server Error", "message": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        # Even on exception, try to log or save partial data
+        return JsonResponse({
+            'title': 'Error Occurred',
+            'message': f'An error occurred: {str(e)}',
+            'details': {
+                'error_type': type(e).__name__,
+                'error_message': str(e)
+            }
+        }, status=500)
 
 
 # ==============================
