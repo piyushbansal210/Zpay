@@ -43,6 +43,10 @@ urlpatterns = [
     path('merchant/dashboard/', chat_views.merchant_dashboard, name='merchant_dashboard'),
     path('merchant/chat/', chat_views.merchant_chat_view, name='merchant_chat'),
     path('merchant/chat/send/', chat_views.merchant_send_message, name='merchant_send_message'),
+    path('merchant/transactions/', chat_views.merchant_transactions_view, name='merchant_transactions'),
+    
+    # Chat API
+    path('api/chat/get_new_messages/', chat_views.get_new_messages, name='get_new_messages'),
     
     # Default redirect
     path('', lambda request: redirect('/login/')),

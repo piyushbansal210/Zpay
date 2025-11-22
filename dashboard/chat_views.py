@@ -183,6 +183,67 @@ def merchant_send_message(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required(login_url='/auth/login/')
+def get_new_messages(request):
+    """API: Get new messages for polling"""
+    try:
+        merchant_id = request.GET.get('merchant_id')
+        last_message_id = request.GET.get('last_message_id', 0)
+        
+        if request.user.is_staff:
+            # Admin requesting messages for a specific merchant
+            if not merchant_id:
+                return JsonResponse({'error': 'Merchant ID required for admin'}, status=400)
+            merchant = get_object_or_404(Merchant, id=merchant_id)
+        else:
+            # Merchant requesting their own messages
+            try:
+                merchant = Merchant.objects.get(user=request.user)
+            except Merchant.DoesNotExist:
+                return JsonResponse({'error': 'Merchant profile not found'}, status=404)
+        
+        # Fetch new messages
+        new_messages = ChatMessage.objects.filter(
+            merchant=merchant,
+            id__gt=last_message_id
+        ).select_related('sender').order_by('created_at')
+        
+        # Mark messages as read if they are from the other party
+        if request.user.is_staff:
+            # Admin reading merchant messages
+            unread = new_messages.filter(is_from_admin=False, is_read=False)
+            for msg in unread:
+                msg.mark_as_read()
+        else:
+            # Merchant reading admin messages
+            unread = new_messages.filter(is_from_admin=True, is_read=False)
+            for msg in unread:
+                msg.mark_as_read()
+        
+        messages_data = []
+        for msg in new_messages:
+            messages_data.append({
+                'id': msg.id,
+                'text': msg.message,
+                'sender': msg.sender.get_full_name() or msg.sender.username if msg.is_from_admin else merchant.merchant_name,
+                'created_at': msg.created_at.strftime('%I:%M %p'),
+                'is_from_admin': msg.is_from_admin,
+                'is_own': (request.user.is_staff and msg.is_from_admin) or (not request.user.is_staff and not msg.is_from_admin)
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 # ==================== MERCHANT AUTH VIEWS ====================
 
 def merchant_login_view(request):
@@ -237,7 +298,51 @@ def merchant_logout_view(request):
 @login_required(login_url='/merchant/login/')
 def merchant_dashboard(request):
     """Merchant dashboard - redirect to chat for now"""
+    return redirect('/merchant/chat/')
+
+
+@login_required(login_url='/merchant/login/')
+def merchant_transactions_view(request):
+    """Merchant view: Show transactions"""
     if request.user.is_staff:
         return redirect('/dashboard/')
     
-    return redirect('/merchant/chat/')
+    try:
+        merchant = Merchant.objects.get(user=request.user)
+    except Merchant.DoesNotExist:
+        return render(request, 'merchant/error.html', {
+            'error': 'Merchant profile not found. Please contact admin.'
+        })
+    
+    # TODO: Fetch real transactions from Easebuzz API
+    # For now, we'll show a placeholder or empty list
+    # We would need to:
+    # 1. Get sub_merchant_key for this merchant (possibly by calling merchant_list API)
+    # 2. Call transaction_report API with that key
+    
+    transactions = []
+    
+    # MOCK DATA FOR DEMONSTRATION
+    # transactions = [
+    #     {
+    #         'created_at': timezone.now(),
+    #         'transaction_id': 'TXN123456789',
+    #         'transaction_type': 'Payout',
+    #         'amount': '5000.00',
+    #         'status': 'SUCCESS'
+    #     },
+    #     {
+    #         'created_at': timezone.now() - timezone.timedelta(days=1),
+    #         'transaction_id': 'TXN987654321',
+    #         'transaction_type': 'Payout',
+    #         'amount': '2500.00',
+    #         'status': 'PENDING'
+    #     }
+    # ]
+    
+    context = {
+        'merchant': merchant,
+        'transactions': transactions,
+    }
+    
+    return render(request, 'merchant/transactions.html', context)
