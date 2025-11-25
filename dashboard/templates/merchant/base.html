@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Merchant Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/sidebar.css' %}">
+    <script src="{% static 'dashboard/js/sidebar.js' %}" defer></script>
+    <style>
+        /* Avatar */
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #84c340, #6fa830);
+            color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Modal Styling */
+        .profile-modal .modal-content {
+            border-radius: 20px;
+            border: none;
+            padding: 0;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #84c340, #6fa830);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .profile-header .prof-avatar {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            color: #6fa830;
+            margin: 0 auto 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+            font-weight: 600;
+        }
+
+        .profile-section {
+            padding: 24px;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .profile-row span {
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .profile-row small {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .logout-btn {
+            margin-top: 15px;
+            background: #ff4d4f;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            transition: 0.25s;
+            width: 100%;
+        }
+
+        .logout-btn:hover {
+            background: #e04345;
+        }
+
+        /* Glass background overlay */
+        .profile-modal .modal-dialog {
+            backdrop-filter: blur(10px);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sb" id="sidebar">
+            {% include "merchant/sidebar.html" %}
+        </aside>
+
+        <!-- Main Content -->
+        <main id="content" class="main">
+            <!-- Topbar -->
+            <header class="topbar">
+                <button class="ghost btn-toggle" id="sbToggle" aria-label="Toggle sidebar">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
+
+                <div class="topbar-title">Merchant Dashboard</div>
+
+                <div class="topbar-right">
+                    <div class="avatar" data-bs-toggle="modal" data-bs-target="#profileModal">
+                        {{ merchant.merchant_name|slice:":2"|upper }}
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Content -->
+            <section class="page">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <!-- ===================== PROFILE MODAL ===================== -->
+    <div class="modal fade profile-modal" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- Header -->
+                <div class="profile-header">
+                    <div class="prof-avatar">
+                        {{ merchant.merchant_name|slice:":2"|upper }}
+                    </div>
+                    <h5>{{ merchant.merchant_name }}</h5>
+                    <p>{{ merchant.email }}</p>
+                </div>
+
+                <!-- Details -->
+                <div class="profile-section">
+
+                    <div class="profile-info">
+                        <div class="profile-row">
+                            <span>Merchant ID</span>
+                            <small>{{ merchant.id }}</small>
+                        </div>
+
+                        <div class="profile-row">
+                            <span>Status</span>
+                            <small
+                                class="{% if merchant.is_active %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                                {{ merchant.prepaid_status }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <button class="logout-btn" onclick="window.location.href='/merchant/logout/'">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

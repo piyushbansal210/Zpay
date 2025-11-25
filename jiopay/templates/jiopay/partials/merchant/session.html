@@ -1,0 +1,503 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Active Merchant Sessions
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Monitor and manage active merchant login sessions</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <button id="bulkDeleteBtn" class="btn" style="background: #fee2e2; border: none; color: #b91c1c; border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-trash3"></i> Bulk Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="position-relative">
+        <input 
+          type="text" 
+          id="searchBox" 
+          class="form-control ps-5" 
+          placeholder="Search by email or IP address..."
+          style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+        <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions Table (Always Visible) -->
+  <div id="sessionsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">
+                <input type="checkbox" id="selectAll" class="form-check-input" style="cursor: pointer;">
+              </th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Email</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">IP Address</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Session Start</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionTableBody">
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading active sessions...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--stroke); padding: 20px 24px;">
+        <h5 class="modal-title fw-semibold" style="color: var(--text);">
+          <i class="bi bi-exclamation-triangle" style="color: #ef4444;"></i> Confirm Session Deletion
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <p style="color: var(--text); margin-bottom: 0;">Are you sure you want to delete the selected session(s)? This action cannot be undone and users will be logged out immediately.</p>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--stroke); padding: 16px 24px;">
+        <button type="button" class="btn" data-bs-dismiss="modal" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px;">
+          Cancel
+        </button>
+        <button type="button" class="btn" id="confirmDeleteBtn" style="background: #ef4444; border: none; color: white; border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+          <i class="bi bi-trash3"></i> Delete Session(s)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let sessionsData = [];
+let filteredData = [];
+let selectedSessions = new Set();
+let isLoading = false;
+const API_TIMEOUT = 5000;
+
+function initActiveSessionsPage() {
+  console.log('Initializing Active Sessions Page...');
+  setupEventListeners();
+  loadSessions();
+}
+
+function setupEventListeners() {
+  // Search input with debounce
+  let searchTimeout;
+  const searchInput = document.getElementById('searchBox');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterSessions();
+      }, 300);
+    });
+  }
+
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadSessions);
+  }
+
+  // Bulk delete button
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+  }
+
+  // Select all checkbox
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) {
+    selectAll.addEventListener('change', function(e) {
+      const checkboxes = document.querySelectorAll('.session-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = e.target.checked;
+        const sessionId = cb.dataset.sessionId;
+        if (e.target.checked) {
+          selectedSessions.add(sessionId);
+        } else {
+          selectedSessions.delete(sessionId);
+        }
+      });
+      updateSelectedCount();
+    });
+  }
+}
+
+async function loadSessions() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  selectedSessions.clear();
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  
+  const tbody = document.getElementById('sessionTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading active sessions...</p>
+      </td>
+    </tr>
+  `;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch('/jiopay/active_sessions/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.success === false) {
+      throw new Error(data.message || 'Failed to load sessions');
+    }
+
+    sessionsData = data.sessions || data.data || data.results || [];
+    
+    if (!Array.isArray(sessionsData)) {
+      sessionsData = [];
+    }
+
+    filteredData = [...sessionsData];
+    renderTable();
+
+  } catch (error) {
+    console.error('Error loading sessions:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - No active sessions found');
+    } else {
+      renderEmptyTable('Unable to load sessions. ' + error.message);
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('sessionTableBody');
+  
+  if (filteredData.length === 0) {
+    renderEmptyTable();
+    return;
+  }
+
+  tbody.innerHTML = filteredData.map((session, index) => {
+    const sessionId = session.session_id || session.id || `session-${index}`;
+    const email = session.email || 'N/A';
+    const ip = session.ip || session.ip_address || 'Unknown';
+    const sessionStart = session.created_at || session.start_time || new Date().toISOString();
+    
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px;">
+          <input type="checkbox" class="form-check-input session-checkbox" data-session-id="${sessionId}" style="cursor: pointer;" onchange="handleCheckboxChange(this)">
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-envelope me-2" style="color: var(--muted);"></i>${email}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          <i class="bi bi-geo-alt me-2" style="color: var(--muted);"></i>${ip}
+        </td>
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          <i class="bi bi-clock me-2"></i>${formatDateTime(sessionStart)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick="deleteSingleSession('${sessionId}')" 
+            style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 8px; padding: 6px 12px;" 
+            title="Delete Session">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No active sessions found') {
+  const tbody = document.getElementById('sessionTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-clock-history" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Active Sessions</p>
+          <p class="mb-3" style="font-size: 0.875rem;">${message}</p>
+          <button class="btn btn-sm" onclick="loadSessions()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+  
+  document.getElementById('selectAll').checked = false;
+}
+
+function updateSelectedCount() {
+  // Selected count display can be added to header if needed in the future
+  console.log('Selected sessions:', selectedSessions.size);
+}
+
+function handleCheckboxChange(checkbox) {
+  const sessionId = checkbox.dataset.sessionId;
+  if (checkbox.checked) {
+    selectedSessions.add(sessionId);
+  } else {
+    selectedSessions.delete(sessionId);
+    document.getElementById('selectAll').checked = false;
+  }
+  updateSelectedCount();
+}
+
+function filterSessions() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  filteredData = sessionsData.filter(session => {
+    const email = (session.email || '').toLowerCase();
+    const ip = (session.ip || session.ip_address || '').toLowerCase();
+    
+    return email.includes(searchTerm) || ip.includes(searchTerm);
+  });
+
+  renderTable();
+}
+
+function deleteSingleSession(sessionId) {
+  selectedSessions.clear();
+  selectedSessions.add(sessionId);
+  
+  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+  modal.show();
+}
+
+function handleBulkDelete() {
+  if (selectedSessions.size === 0) {
+    showToast('Please select at least one session to delete', 'error');
+    return;
+  }
+  
+  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+  modal.show();
+}
+
+// Confirm delete action
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+  const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+  modal.hide();
+  
+  const sessionIds = Array.from(selectedSessions);
+  
+  try {
+    // TODO: Replace with actual API endpoint
+    const response = await fetch('/jiopay/delete_sessions/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ session_ids: sessionIds })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete sessions');
+    }
+    
+    showToast(`Successfully deleted ${sessionIds.length} session(s)`, 'success');
+    selectedSessions.clear();
+    loadSessions();
+    
+  } catch (error) {
+    console.error('Error deleting sessions:', error);
+    showToast('Failed to delete sessions: ' + error.message, 'error');
+  }
+});
+
+function formatDateTime(dateString) {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return 'Unknown';
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ✅ Handle direct page loads
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('sessionsTable')) {
+    initActiveSessionsPage();
+  }
+});
+
+// ✅ Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#sessionsTable')) {
+    setTimeout(initActiveSessionsPage, 50);
+  }
+});
+
+// ✅ Handle HTMX before swap
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+/* Form controls focus */
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Button hover effects */
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Checkbox styling */
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--stroke);
+  border-radius: 4px;
+}
+
+.form-check-input:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+
+/* Ensure all corners are rounded */
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+</style>

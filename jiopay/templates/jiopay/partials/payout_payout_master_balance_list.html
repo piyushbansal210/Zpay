@@ -1,0 +1,617 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+       Bank Balance List
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Monitor active bank accounts and transaction limits</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="loadBankBalances()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh All
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center">
+            <div style="background: #dcfce7; border-radius: 12px; padding: 12px; margin-right: 12px;">
+              <i class="bi bi-bank2" style="color: #15803d; font-size: 1.5rem;"></i>
+            </div>
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.75rem;">Total Banks</p>
+              <h5 class="mb-0 fw-bold" id="totalBanks" style="color: var(--text);">0</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center">
+            <div style="background: #e0f2fe; border-radius: 12px; padding: 12px; margin-right: 12px;">
+              <i class="bi bi-people-fill" style="color: #0369a1; font-size: 1.5rem;"></i>
+            </div>
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.75rem;">Active Merchants</p>
+              <h5 class="mb-0 fw-bold" id="totalMerchants" style="color: var(--text);">0</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center">
+            <div style="background: #ffedd5; border-radius: 12px; padding: 12px; margin-right: 12px;">
+              <i class="bi bi-cash-stack" style="color: #c2410c; font-size: 1.5rem;"></i>
+            </div>
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.75rem;">Total Balance</p>
+              <h5 class="mb-0 fw-bold" id="totalBalance" style="color: var(--text);">₹0.00</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center">
+            <div style="background: #fef3c7; border-radius: 12px; padding: 12px; margin-right: 12px;">
+              <i class="bi bi-arrow-repeat" style="color: #92400e; font-size: 1.5rem;"></i>
+            </div>
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.75rem;">Total Transactions</p>
+              <h5 class="mb-0 fw-bold" id="totalTxns" style="color: var(--text);">0</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="form-control ps-5" 
+              placeholder="Search by Route Name or Account Number..."
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="sortSelect" style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            <option value="">Sort By</option>
+            <option value="balance_high">Balance: High to Low</option>
+            <option value="balance_low">Balance: Low to High</option>
+            <option value="txn_high">Transactions: High to Low</option>
+            <option value="txn_low">Transactions: Low to High</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button id="exportBtn" class="btn w-100" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 12px 20px; font-weight: 600;">
+            <i class="bi bi-download"></i> Export CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Balance Table -->
+  <div id="bankBalanceTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Bank Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Route Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Account No.</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Active Merchants</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Current Balance</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Transaction Limits</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bankBalanceTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading bank balance data...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> banks
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let banksData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let searchTimeout = null;
+const API_TIMEOUT = 10000;
+
+function initBankBalancePage() {
+  console.log('Initializing Bank Balance List Page...');
+  setupEventListeners();
+  loadBankBalances();
+}
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchInput');
+  const sortSelect = document.getElementById('sortSelect');
+  const exportBtn = document.getElementById('exportBtn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterBanks();
+      }, 600);
+    });
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener('change', sortBanks);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportToCSV);
+  }
+}
+
+async function loadBankBalances() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('bankBalanceTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading bank balance data...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const searchQuery = document.getElementById('searchInput').value.trim();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/api/payout/bank_balance/${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 1 && data.banks && data.banks.length > 0) {
+      banksData = data.banks;
+      filteredData = [...banksData];
+      updateStats();
+      renderTable();
+      showToast('Bank balances loaded successfully', 'success');
+    } else {
+      banksData = [];
+      filteredData = [];
+      updateStats();
+      renderEmptyTable(data.message || 'No bank accounts found');
+    }
+
+  } catch (error) {
+    console.error('Error loading bank balances:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load bank balances. ' + error.message);
+      // showToast('Failed to load bank balances', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function updateStats() {
+  const totalBanks = filteredData.length;
+  const totalMerchants = filteredData.reduce((sum, bank) => sum + (parseInt(bank.active_merchant) || 0), 0);
+  const totalBalance = filteredData.reduce((sum, bank) => sum + (parseFloat(bank.current_balance) || 0), 0);
+  const totalTxns = filteredData.reduce((sum, bank) => sum + (parseInt(bank.txn_per_day) || 0), 0);
+
+  document.getElementById('totalBanks').textContent = totalBanks;
+  document.getElementById('totalMerchants').textContent = formatNumber(totalMerchants);
+  document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
+  document.getElementById('totalTxns').textContent = formatNumber(totalTxns);
+}
+
+function renderTable() {
+  const tbody = document.getElementById('bankBalanceTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No banks match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((bank) => {
+    const bankName = bank.bank_name || bank.bankName || '-';
+    const routeName = bank.route_name || bank.routeName || '-';
+    const accountNo = bank.account_no || bank.accountNo || '-';
+    const activeMerchant = bank.active_merchant || bank.activeMerchant || '0';
+    const currentBalance = parseFloat(bank.current_balance || bank.currentBalance || 0);
+    const txnPerDay = parseInt(bank.txn_per_day || bank.txnPerDay || 0);
+    const remainingTxn = parseInt(bank.remaining_txn || bank.remainingTxn || 0);
+
+    const balanceClass = currentBalance < 10000 ? '#b91c1c' : '#15803d';
+    const remainingPercent = txnPerDay > 0 ? (remainingTxn / txnPerDay * 100).toFixed(0) : 0;
+    const statusColor = remainingPercent > 50 ? '#15803d' : remainingPercent > 20 ? '#c2410c' : '#b91c1c';
+    const statusBg = remainingPercent > 50 ? '#dcfce7' : remainingPercent > 20 ? '#ffedd5' : '#fee2e2';
+    const statusBorder = remainingPercent > 50 ? '#bbf7d0' : remainingPercent > 20 ? '#fed7aa' : '#fecaca';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-bank me-2" style="color: var(--accent);"></i>${bankName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${routeName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${accountNo}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            <i class="bi bi-people me-1"></i>${activeMerchant}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: right; font-weight: 700; font-size: 0.875rem; color: ${balanceClass};">
+          ${formatCurrency(currentBalance)}
+        </td>
+        <td style="padding: 16px 20px;">
+          <div style="text-align: center;">
+            <small class="text-muted d-block mb-1">Daily: ${formatNumber(txnPerDay)}</small>
+            <div class="progress" style="height: 6px; background: var(--page);">
+              <div class="progress-bar" role="progressbar" 
+                   style="width: ${remainingPercent}%; background: ${statusColor};" 
+                   aria-valuenow="${remainingPercent}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="d-block mt-1" style="color: ${statusColor}; font-weight: 600;">
+              ${formatNumber(remainingTxn)} remaining
+            </small>
+          </div>
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick="refreshBalance('${bank.id || accountNo}', '${bankName}')" 
+            style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;" 
+            title="Refresh Balance">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No bank accounts found') {
+  const tbody = document.getElementById('bankBalanceTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Bank Accounts</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function filterBanks() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  if (!searchTerm) {
+    filteredData = [...banksData];
+  } else {
+    filteredData = banksData.filter(bank => {
+      const routeName = (bank.route_name || bank.routeName || '').toLowerCase();
+      const accountNo = (bank.account_no || bank.accountNo || '').toLowerCase();
+      const bankName = (bank.bank_name || bank.bankName || '').toLowerCase();
+
+      return routeName.includes(searchTerm) || 
+             accountNo.includes(searchTerm) || 
+             bankName.includes(searchTerm);
+    });
+  }
+
+  currentPage = 1;
+  updateStats();
+  renderTable();
+}
+
+function sortBanks() {
+  const sortType = document.getElementById('sortSelect').value;
+
+  if (!sortType) {
+    filteredData = [...banksData];
+  } else {
+    filteredData = [...filteredData].sort((a, b) => {
+      switch(sortType) {
+        case 'balance_high':
+          return parseFloat(b.current_balance || 0) - parseFloat(a.current_balance || 0);
+        case 'balance_low':
+          return parseFloat(a.current_balance || 0) - parseFloat(b.current_balance || 0);
+        case 'txn_high':
+          return parseInt(b.txn_per_day || 0) - parseInt(a.txn_per_day || 0);
+        case 'txn_low':
+          return parseInt(a.txn_per_day || 0) - parseInt(b.txn_per_day || 0);
+        default:
+          return 0;
+      }
+    });
+  }
+
+  currentPage = 1;
+  renderTable();
+}
+
+async function refreshBalance(bankId, bankName) {
+  showToast(`Refreshing balance for ${bankName}...`, 'info');
+
+  try {
+    const response = await fetch(`/api/payout/bank_balance/refresh/${bankId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.status === 1) {
+      showToast(`Balance refreshed successfully for ${bankName}`, 'success');
+      loadBankBalances();
+    } else {
+      // showToast(data.message || 'Failed to refresh balance', 'error');
+    }
+  } catch (error) {
+    console.error('Error refreshing balance:', error);
+    // showToast('Failed to refresh balance', 'error');
+  }
+}
+
+function exportToCSV() {
+  if (filteredData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  const csvContent = [
+    ['Bank Name', 'Route Name', 'Account No', 'Active Merchants', 'Current Balance', 'Txn/Day', 'Remaining Txn'],
+    ...filteredData.map(bank => [
+      bank.bank_name || '',
+      bank.route_name || '',
+      bank.account_no || '',
+      bank.active_merchant || '0',
+      bank.current_balance || '0',
+      bank.txn_per_day || '0',
+      bank.remaining_txn || '0'
+    ])
+  ].map(row => row.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bank_balances_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+
+  showToast('Data exported successfully', 'success');
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2
+  }).format(amount || 0);
+}
+
+function formatNumber(num) {
+  return new Intl.NumberFormat('en-IN').format(num || 0);
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('bankBalanceTable')) {
+    initBankBalancePage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#bankBalanceTable')) {
+    setTimeout(initBankBalancePage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.progress {
+  background-color: var(--page);
+  border-radius: 4px;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+</style>

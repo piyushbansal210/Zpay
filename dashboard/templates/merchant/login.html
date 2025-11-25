@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Login - ZPay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --accent: #84c340;
+      --accent-ink: #1a1a1a;
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --stroke: #e5e7eb;
+      --page: #f9fafb;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-width: 450px;
+      width: 100%;
+    }
+    
+    .login-header {
+      background: linear-gradient(135deg, var(--accent) 0%, #6fa830 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+    
+    .login-body {
+      padding: 40px 30px;
+    }
+    
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1);
+    }
+    
+    .btn-login {
+      background: var(--accent);
+      border: none;
+      color: var(--accent-ink);
+      padding: 12px;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    
+    .btn-login:hover {
+      background: #6fa830;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(132, 195, 64, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <h2 class="mb-2"><i class="bi bi-shop"></i> ZPay Merchant</h2>
+      <p class="mb-0 opacity-90">Sign in to your merchant portal</p>
+    </div>
+    
+    <div class="login-body">
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+      
+      <form method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <label class="form-label fw-medium">
+            <i class="bi bi-person-fill me-1"></i> Email or Username
+          </label>
+          <input 
+            type="text" 
+            name="username" 
+            class="form-control form-control-lg" 
+            placeholder="Enter your email or username"
+            required
+            autofocus
+            style="border-radius: 10px;">
+          <small class="text-muted" style="font-size: 0.75rem;">You can use either your email address or username</small>
+        </div>
+        
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            <i class="bi bi-lock-fill me-1"></i> Password
+          </label>
+          <input 
+            type="password" 
+            name="password" 
+            class="form-control form-control-lg" 
+            placeholder="Enter your password"
+            required
+            style="border-radius: 10px;">
+        </div>
+        
+        <button type="submit" class="btn btn-login w-100 btn-lg">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+        </button>
+      </form>
+      
+      <div class="text-center mt-4">
+        <p class="text-muted mt-2" style="font-size: 0.85rem;">
+          <i class="bi bi-info-circle me-1"></i> Need help? Contact admin support
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

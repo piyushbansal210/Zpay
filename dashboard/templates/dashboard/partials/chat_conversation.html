@@ -1,0 +1,159 @@
+<!-- Chat Header -->
+<div class="card-header d-flex align-items-center justify-content-between"
+  style="background: var(--bg); border-bottom: 1px solid var(--stroke); padding: 16px 20px;">
+  <div class="d-flex align-items-center gap-3">
+    <div class="avatar-circle"
+      style="width: 45px; height: 45px; border-radius: 50%; background: var(--accent); display: grid; place-items: center;">
+      <span style="color: var(--accent-ink); font-weight: 600; font-size: 1.1rem;">
+        {{ merchant.merchant_name.0|upper }}
+      </span>
+    </div>
+    <div>
+      <h5 class="mb-0 fw-semibold" style="color: var(--text);">{{ merchant.merchant_name }}</h5>
+      <small class="text-muted">{{ merchant.email }}</small>
+    </div>
+  </div>
+  <div>
+    <span class="badge"
+      style="background: {% if merchant.is_active %}var(--accent){% else %}#ff6b6b{% endif %}; color: {% if merchant.is_active %}var(--accent-ink){% else %}white{% endif %}; padding: 6px 12px;">
+      {{ merchant.prepaid_status }}
+    </span>
+  </div>
+</div>
+
+<!-- Messages Area -->
+<div class="card-body" style="flex-grow: 1; overflow-y: auto; padding: 20px; background: var(--page);"
+  id="messages-container">
+  {% if messages %}
+  {% for message in messages %}
+  <div class="d-flex {% if message.is_from_admin %}justify-content-end{% else %}justify-content-start{% endif %} mb-3">
+    <div class="message-bubble"
+      style="max-width: 70%; padding: 12px 16px; border-radius: 16px; {% if message.is_from_admin %}background: var(--accent); color: var(--accent-ink);{% else %}background: var(--bg); color: var(--text); border: 1px solid var(--stroke);{% endif %}">
+      {% if not message.is_from_admin %}
+      <strong style="font-size: 0.85rem; display: block; margin-bottom: 4px; opacity: 0.8;">{{ merchant.merchant_name
+        }}</strong>
+      {% endif %}
+      <p class="mb-1" style="font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap;">{{ message.message }}</p>
+      <div class="d-flex justify-content-between align-items-center mt-1">
+        <small class="opacity-75" style="font-size: 0.75rem;">
+          {{ message.created_at|date:"h:i A" }}
+        </small>
+        {% if message.is_from_admin and message.is_read %}
+        <i class="bi bi-check-all ms-2" style="font-size: 0.9rem;" title="Read"></i>
+        {% elif message.is_from_admin %}
+        <i class="bi bi-check ms-2" style="font-size: 0.9rem;" title="Sent"></i>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="text-center py-5">
+    <i class="bi bi-chat-dots" style="font-size: 3rem; color: var(--muted);"></i>
+    <p class="text-muted mt-3">No messages yet. Start the conversation!</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Message Input -->
+<div class="card-footer" style="background: var(--bg); border-top: 1px solid var(--stroke); padding: 16px 20px;">
+  <div class="input-group">
+    <textarea id="messageInput" class="form-control" placeholder="Type your message..." rows="2"
+      style="border: 1px solid var(--stroke); border-radius: 12px; resize: none; padding: 12px; background: var(--page); color: var(--text);"></textarea>
+    <button id="sendBtn" onclick="sendMessage()" class="btn ms-2"
+      style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 12px; padding: 0 24px; font-weight: 600;">
+      <i class="bi bi-send-fill"></i> Send
+    </button>
+  </div>
+  <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">
+    <i class="bi bi-info-circle"></i> Press Enter to send, Shift+Enter for new line
+  </small>
+</div>
+
+<script>
+  // Auto-scroll to bottom on load
+  document.addEventListener('DOMContentLoaded', function () {
+    scrollToBottom();
+  });
+
+  // Polling for new messages
+  let lastMessageId = {{ messages.last.id|default:0 }};
+  const merchantId = {{ merchant.id }};
+
+  function checkNewMessages() {
+    // Only poll if we are still on the same merchant's chat
+    // (Though this template is usually replaced when switching merchants, safety check)
+
+    fetch(`/api/chat/get_new_messages/?merchant_id=${merchantId}&last_message_id=${lastMessageId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.messages.length > 0) {
+          const messagesContainer = document.getElementById('messages-container');
+          let shouldScroll = messagesContainer.scrollTop + messagesContainer.clientHeight === messagesContainer.scrollHeight;
+
+          data.messages.forEach(msg => {
+            lastMessageId = Math.max(lastMessageId, msg.id);
+
+            // Only append messages that are not from the current user (i.e., merchant messages)
+            if (!msg.is_own) {
+              appendMessage(msg, false); // false indicates it's NOT from admin (so it's from merchant)
+            }
+          });
+
+          // Scroll to bottom if user was already at bottom or if it's a new message
+          if (shouldScroll || data.messages.some(msg => !msg.is_own)) {
+            scrollToBottom();
+          }
+        }
+      })
+      .catch(error => console.error('Error polling messages:', error));
+  }
+
+  // Helper to append message to DOM
+  function appendMessage(msg, isFromAdmin) {
+    const messagesContainer = document.getElementById('messages-container');
+
+    const wrapperDiv = document.createElement('div');
+    wrapperDiv.className = `d-flex ${isFromAdmin ? 'justify-content-end' : 'justify-content-start'} mb-3`;
+
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-bubble';
+    bubbleDiv.style.maxWidth = '70%';
+    bubbleDiv.style.padding = '12px 16px';
+    bubbleDiv.style.borderRadius = '16px';
+
+    if (isFromAdmin) {
+      bubbleDiv.style.background = 'var(--accent)';
+      bubbleDiv.style.color = 'var(--accent-ink)';
+    } else {
+      bubbleDiv.style.background = 'var(--bg)';
+      bubbleDiv.style.color = 'var(--text)';
+      bubbleDiv.style.border = '1px solid var(--stroke)';
+    }
+
+    let contentHtml = '';
+    if (!isFromAdmin) {
+      contentHtml += `<strong style="font-size: 0.85rem; display: block; margin-bottom: 4px; opacity: 0.8;">${msg.sender}</strong>`;
+    }
+
+    contentHtml += `<p class="mb-1" style="font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap;">${msg.text}</p>`;
+
+    contentHtml += `
+    <div class="d-flex justify-content-between align-items-center mt-1">
+      <small class="opacity-75" style="font-size: 0.75rem;">
+        ${msg.created_at}
+      </small>
+      ${isFromAdmin ? '<i class="bi bi-check ms-2" style="font-size: 0.9rem;" title="Sent"></i>' : ''}
+    </div>
+  `;
+
+    bubbleDiv.innerHTML = contentHtml;
+    wrapperDiv.appendChild(bubbleDiv);
+    messagesContainer.appendChild(wrapperDiv);
+  }
+
+  // Poll every 2 seconds
+  // Store interval ID to clear it if needed (e.g. HTMX swap)
+  if (window.chatPollInterval) clearInterval(window.chatPollInterval);
+  window.chatPollInterval = setInterval(checkNewMessages, 2000);
+</script>

@@ -1,0 +1,764 @@
+
+
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">View Merchants</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage and view all registered merchants</p>
+    </div>
+    <button class="btn" onclick="refreshMerchants()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Search Section -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3 align-items-end">
+        <!-- Search Bar -->
+        <div class="col-md-12">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="form-control ps-5" 
+              placeholder="Search by business name, email, phone, merchant ID..."
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.95rem;">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 1.1rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingState" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); display: none;">
+    <div class="card-body text-center" style="padding: 60px 20px;">
+      <div class="spinner-border" style="width: 3rem; height: 3rem; color: var(--accent);" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 text-muted">Loading merchants data...</p>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); display: none;">
+    <div class="card-body text-center" style="padding: 60px 20px;">
+      <div style="width: 120px; height: 120px; margin: 0 auto 24px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 50%; display: grid; place-items: center;">
+        <i class="bi bi-inbox" style="font-size: 56px; color: #0ea5e9;"></i>
+      </div>
+      <h5 class="fw-semibold mb-2" style="color: var(--text);">No Merchants Found</h5>
+      <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
+        <span id="emptyStateMessage">There are no merchants added yet. Start by adding your first merchant to the platform.</span>
+      </p>
+      <button class="btn" onclick="window.location.href='/easebuzz/merchant/add/'" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+        <i class="bi bi-person-plus"></i> Add First Merchant
+      </button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="errorState" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); display: none;">
+    <div class="card-body text-center" style="padding: 60px 20px;">
+      <div style="width: 120px; height: 120px; margin: 0 auto 24px; background: linear-gradient(135deg, #fef2f2, #fee2e2); border-radius: 50%; display: grid; place-items: center;">
+        <i class="bi bi-exclamation-triangle" style="font-size: 56px; color: #ef4444;"></i>
+      </div>
+      <h5 class="fw-semibold mb-2" style="color: var(--text);">Unable to Load Merchants</h5>
+      <p class="text-muted mb-4" id="errorMessage">There was an error connecting to the server. Please try again.</p>
+      <button class="btn" onclick="refreshMerchants()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Try Again
+      </button>
+    </div>
+  </div>
+
+  <!-- Merchants Table -->
+  <div id="merchantsContainer" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); display: none;">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Full Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Email</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Mobile No.</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Created Date</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Created By</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Payin</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Payout</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Offline</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Card</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Edit</th>
+            </tr>
+          </thead>
+          <tbody id="merchantsTableBody">
+            <!-- Merchants will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> merchants
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList">
+        <!-- Pagination will be generated here -->
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--stroke); padding: 20px 24px;">
+        <h5 class="modal-title fw-semibold" style="color: var(--text);">
+          <i class="bi bi-person-circle" style="color: var(--accent);"></i> Merchant Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;" id="merchantDetailsBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Action Modal -->
+<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-body text-center" style="padding: 32px;">
+        <div id="confirmIcon" style="width: 64px; height: 64px; margin: 0 auto 20px; background: linear-gradient(135deg, #fff7ed, #fed7aa); border-radius: 50%; display: grid; place-items: center;">
+          <i class="bi bi-exclamation-triangle" style="font-size: 32px; color: #ea580c;"></i>
+        </div>
+        <h5 class="fw-semibold mb-2" style="color: var(--text);" id="confirmTitle">Confirm Action</h5>
+        <p class="text-muted mb-4" id="confirmMessage">Are you sure you want to proceed?</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn" data-bs-dismiss="modal" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 24px;">
+            Cancel
+          </button>
+          <button type="button" class="btn" id="confirmActionBtn" style="background: #ef4444; border: none; color: white; border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let merchantsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadMerchants();
+  setupEventListeners();
+});
+
+function setupEventListeners() {
+  // Search input with debounce
+  let searchTimeout;
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      filterMerchants();
+    }, 300);
+  });
+}
+
+async function loadMerchants() {
+  showState('loading');
+  
+  try {
+    const response = await fetch('/api/merchants/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Handle different response structures
+    if (data.success === false) {
+      throw new Error(data.message || 'Failed to load merchants');
+    }
+
+    // Extract merchants array from various possible response formats
+    merchantsData = data.merchants || data.data || data.results || data || [];
+    
+    if (!Array.isArray(merchantsData)) {
+      merchantsData = [];
+    }
+
+    if (merchantsData.length === 0) {
+      showState('empty');
+    } else {
+      filteredData = [...merchantsData];
+      renderMerchants();
+      showState('content');
+    }
+
+  } catch (error) {
+    console.error('Error loading merchants:', error);
+    showState('error', error.message);
+  }
+}
+
+function calculateStats(data) {
+  return {
+    total: data.length,
+    active: data.filter(m => m.status?.toLowerCase() === 'active').length,
+    pending: data.filter(m => m.status?.toLowerCase() === 'pending').length,
+    inactive: data.filter(m => m.status?.toLowerCase() === 'inactive' || m.status?.toLowerCase() === 'suspended').length
+  };
+}
+
+function updateStats(stats) {
+  document.getElementById('totalMerchants').textContent = stats.total;
+  document.getElementById('activeMerchants').textContent = stats.active;
+  document.getElementById('pendingMerchants').textContent = stats.pending;
+  document.getElementById('inactiveMerchants').textContent = stats.inactive;
+  
+  if (stats.total > 0) {
+    document.getElementById('statsContainer').style.display = 'flex';
+  } else {
+    document.getElementById('statsContainer').style.display = 'none';
+  }
+}
+
+function filterMerchants() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  filteredData = merchantsData.filter(merchant => {
+    // Search filter - search across multiple fields
+    const searchMatch = !searchTerm || 
+      (merchant.merchant_name || merchant.business_name || merchant.name || '').toLowerCase().includes(searchTerm) ||
+      (merchant.full_name || merchant.contact_name || '').toLowerCase().includes(searchTerm) ||
+      (merchant.email || '').toLowerCase().includes(searchTerm) ||
+      (merchant.phone || merchant.mobile || '').includes(searchTerm) ||
+      (merchant.merchant_id || merchant.id || '').toString().toLowerCase().includes(searchTerm) ||
+      (merchant.created_by || merchant.creator || '').toLowerCase().includes(searchTerm);
+
+    return searchMatch;
+  });
+
+  currentPage = 1;
+  
+  if (filteredData.length === 0 && merchantsData.length > 0) {
+    // Show empty state with different message for filtered results
+    document.getElementById('emptyStateMessage').textContent = 'No merchants match your search criteria. Try adjusting your search.';
+    showState('empty');
+  } else if (filteredData.length === 0) {
+    showState('empty');
+  } else {
+    renderMerchants();
+    showState('content');
+  }
+}
+
+function renderMerchants() {
+  const tbody = document.getElementById('merchantsTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  tbody.innerHTML = paginatedData.map(merchant => {
+    const merchantName = merchant.merchant_name || merchant.business_name || merchant.name || 'N/A';
+    const fullName = merchant.full_name || merchant.contact_name || 'N/A';
+    const email = merchant.email || 'N/A';
+    const phone = merchant.phone || merchant.mobile || 'N/A';
+    const createdDate = merchant.created_date || merchant.created_at || 'N/A';
+    const createdBy = merchant.created_by || merchant.creator || 'N/A';
+    
+    // Status indicators - green lock (enabled) or red lock (disabled)
+    const statusEnabled = merchant.status_enabled !== false;
+    const payinEnabled = merchant.payin_enabled !== false;
+    const payoutEnabled = merchant.payout_enabled !== false;
+    const offlineEnabled = merchant.offline_enabled !== false;
+    const cardEnabled = merchant.card_enabled !== false;
+    
+    const getLockIcon = (enabled) => enabled 
+      ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i>'
+      : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i>';
+    
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem;">
+          ${merchantName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${fullName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${email}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${phone}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${formatDate(createdDate)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${createdBy}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${getLockIcon(statusEnabled)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${getLockIcon(payinEnabled)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${getLockIcon(payoutEnabled)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${getLockIcon(offlineEnabled)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${getLockIcon(cardEnabled)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick="editMerchant('${merchant.merchant_id || merchant.id}')" 
+            style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 12px; width: 40px; height: 40px;" 
+            title="Edit">
+            <i class="bi bi-pencil-fill"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function formatDate(dateString) {
+  if (!dateString || dateString === 'N/A') return 'N/A';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return dateString;
+  }
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+  
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+  
+  // Update showing text
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = '';
+
+  // Previous button
+  paginationHTML += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  // Next button
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderMerchants();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showState(state, message = '') {
+  const states = ['loadingState', 'emptyState', 'errorState', 'merchantsContainer'];
+  states.forEach(s => document.getElementById(s).style.display = 'none');
+
+  if (state === 'loading') {
+    document.getElementById('loadingState').style.display = 'block';
+  } else if (state === 'empty') {
+    document.getElementById('emptyState').style.display = 'block';
+  } else if (state === 'error') {
+    document.getElementById('errorState').style.display = 'block';
+    document.getElementById('errorMessage').textContent = message || 'There was an error connecting to the server. Please try again.';
+  } else if (state === 'content') {
+    document.getElementById('merchantsContainer').style.display = 'block';
+  }
+}
+
+function viewMerchantDetails(merchant) {
+  const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+  const body = document.getElementById('merchantDetailsBody');
+  
+  // Get lock status
+  const statusEnabled = merchant.status_enabled !== false;
+  const payinEnabled = merchant.payin_enabled !== false;
+  const payoutEnabled = merchant.payout_enabled !== false;
+  const offlineEnabled = merchant.offline_enabled !== false;
+  const cardEnabled = merchant.card_enabled !== false;
+  
+  body.innerHTML = `
+    <div class="row g-4">
+      <!-- Business Information -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-building" style="color: var(--accent);"></i> Business Information
+          </h6>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Merchant ID</div>
+              <div style="color: var(--text); font-weight: 600;">#${merchant.merchant_id || merchant.id || 'N/A'}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Business Name</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.merchant_name || merchant.business_name || merchant.name || 'N/A'}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Full Name</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.full_name || merchant.contact_name || 'N/A'}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Business Type</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.business_type || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Configuration -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-toggles" style="color: var(--accent);"></i> Service Status
+          </h6>
+          <div class="row g-3">
+            <div class="col-4">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Status</div>
+              <div>${statusEnabled ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i> Enabled' : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i> Disabled'}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Payin</div>
+              <div>${payinEnabled ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i> Enabled' : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i> Disabled'}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Payout</div>
+              <div>${payoutEnabled ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i> Enabled' : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i> Disabled'}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Offline</div>
+              <div>${offlineEnabled ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i> Enabled' : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i> Disabled'}</div>
+            </div>
+            <div class="col-4">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Card</div>
+              <div>${cardEnabled ? '<i class="bi bi-unlock-fill" style="color: var(--accent); font-size: 1.2rem;"></i> Enabled' : '<i class="bi bi-lock-fill" style="color: #ef4444; font-size: 1.2rem;"></i> Disabled'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-telephone" style="color: var(--accent);"></i> Contact Information
+          </h6>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Email</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.email || 'N/A'}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Phone</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.phone || merchant.mobile || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tax Information -->
+      ${merchant.pan || merchant.gstin ? `
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-file-earmark-text" style="color: var(--accent);"></i> Tax Information
+          </h6>
+          <div class="row g-3">
+            ${merchant.pan ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">PAN</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.pan}</div>
+            </div>
+            ` : ''}
+            ${merchant.gstin ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">GSTIN</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.gstin}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Address Information -->
+      ${merchant.address || merchant.city || merchant.state ? `
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-geo-alt" style="color: var(--accent);"></i> Address Information
+          </h6>
+          <div style="color: var(--text);">
+            ${merchant.address || 'N/A'}<br>
+            ${merchant.city ? merchant.city + ', ' : ''}${merchant.state || ''} ${merchant.pincode || ''}
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Bank Information -->
+      ${merchant.bank_name || merchant.account_no ? `
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-bank" style="color: var(--accent);"></i> Bank Information
+          </h6>
+          <div class="row g-3">
+            ${merchant.bank_name ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Bank Name</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.bank_name}</div>
+            </div>
+            ` : ''}
+            ${merchant.account_no ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Account Number</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.account_no}</div>
+            </div>
+            ` : ''}
+            ${merchant.ifsc_code ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">IFSC Code</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.ifsc_code}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Registration Details -->
+      <div class="col-12">
+        <div class="p-3 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+          <h6 class="fw-semibold mb-3" style="color: var(--text);">
+            <i class="bi bi-calendar" style="color: var(--accent);"></i> Registration Details
+          </h6>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Registered On</div>
+              <div style="color: var(--text); font-weight: 600;">${formatDate(merchant.created_at || merchant.created_date || merchant.registered_date)}</div>
+            </div>
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Created By</div>
+              <div style="color: var(--text); font-weight: 600;">${merchant.created_by || merchant.creator || 'N/A'}</div>
+            </div>
+            ${merchant.updated_at ? `
+            <div class="col-6">
+              <div class="mb-2" style="color: var(--muted); font-size: 0.8rem;">Last Updated</div>
+              <div style="color: var(--text); font-weight: 600;">${formatDate(merchant.updated_at)}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.show();
+}
+
+function editMerchant(merchantId) {
+  window.location.href = `/easebuzz/merchant/edit/${merchantId}/`;
+}
+
+function confirmDelete(merchantId, merchantName) {
+  const modal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+  document.getElementById('confirmTitle').textContent = 'Delete Merchant';
+  document.getElementById('confirmMessage').textContent = `Are you sure you want to delete "${merchantName}"? This action cannot be undone.`;
+  
+  document.getElementById('confirmActionBtn').onclick = () => deleteMerchant(merchantId);
+  modal.show();
+}
+
+async function deleteMerchant(merchantId) {
+  const modal = bootstrap.Modal.getInstance(document.getElementById('confirmActionModal'));
+  const btn = document.getElementById('confirmActionBtn');
+  const originalText = btn.innerHTML;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+  
+  try {
+    const response = await fetch(`/api/merchants/${merchantId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    if (response.ok) {
+      modal.hide();
+      await loadMerchants();
+      showToast('Merchant deleted successfully', 'success');
+    } else {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to delete merchant');
+    }
+  } catch (error) {
+    showToast(error.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+
+function refreshMerchants() {
+  // Clear search
+  document.getElementById('searchInput').value = '';
+  currentPage = 1;
+  loadMerchants();
+}
+
+function showToast(message, type) {
+  // You can implement a toast notification here
+  // For now, using alert as fallback
+  alert(message);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+<style>
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+/* Search input focus */
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Button hover effects */
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Pagination active state */
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+
+/* Badge hover */
+.badge:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+</style>
+

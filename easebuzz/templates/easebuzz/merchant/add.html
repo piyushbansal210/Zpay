@@ -1,15 +1,11 @@
-{% extends 'dashboard/base.html' %}
-{% block content %}
-<h4 class="text-primary mb-4">Add Merchant</h4>
-<form class="card p-4 col-md-6">
-  <div class="mb-3">
-    <label class="form-label">Merchant Name</label>
-    <input type="text" class="form-control" placeholder="Enter merchant name">
+{% extends "dashboard/base.html" %}
+{% block content %}{% include "easebuzz/partials/merchant_add.html" %}{% endblock %}
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="mb-3">{{ title }}</h4>
+      <p class="text-muted mb-0">Replace this placeholder with your UI.</p>
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Email</label>
-    <input type="email" class="form-control" placeholder="Enter email">
-  </div>
-  <button class="btn btn-primary">Add Merchant</button>
-</form>
-{% endblock %}
+</div>

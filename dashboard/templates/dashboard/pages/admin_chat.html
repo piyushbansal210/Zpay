@@ -1,0 +1,226 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Merchant Chat</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Communicate with your merchants</p>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Merchants List Sidebar -->
+    <div class="col-lg-4">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); height: calc(100vh - 200px);">
+        <div class="card-header" style="background: var(--bg); border-bottom: 1px solid var(--stroke); padding: 16px 20px;">
+          <h5 class="mb-0 fw-semibold" style="color: var(--text);">
+            <i class="bi bi-people-fill me-2" style="color: var(--accent);"></i>
+            Merchants
+          </h5>
+        </div>
+        <div class="card-body p-0" style="overflow-y: auto;">
+          {% if merchants %}
+            <div class="list-group list-group-flush">
+              {% for merchant in merchants %}
+              <a href="#" 
+                 class="list-group-item list-group-item-action merchant-item {% if merchant.id|stringformat:'s' == active_merchant_id %}active{% endif %}"
+                 data-merchant-id="{{ merchant.id }}"
+                 onclick="loadConversation({{ merchant.id }}); return false;"
+                 style="border: none; border-bottom: 1px solid var(--stroke); padding: 16px 20px; cursor: pointer; transition: all 0.2s;">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <div class="avatar-circle" style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: grid; place-items: center;">
+                        <span style="color: var(--accent-ink); font-weight: 600; font-size: 0.9rem;">
+                          {{ merchant.merchant_name.0|upper }}
+                        </span>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h6 class="mb-0 fw-semibold" style="color: var(--text); font-size: 0.95rem;">
+                          {{ merchant.merchant_name }}
+                        </h6>
+                        <small class="text-muted" style="font-size: 0.75rem;">{{ merchant.email }}</small>
+                      </div>
+                    </div>
+                    <p class="mb-0 text-muted" style="font-size: 0.85rem; margin-top: 4px;">
+                      {{ merchant.last_message }}
+                    </p>
+                  </div>
+                  <div class="text-end ms-2">
+                    <small class="text-muted" style="font-size: 0.7rem; display: block; margin-bottom: 4px;">
+                      {{ merchant.last_message_time_display|timesince }} ago
+                    </small>
+                    {% if merchant.unread_count > 0 %}
+                    <span class="badge rounded-pill" style="background: var(--accent); color: var(--accent-ink); font-size: 0.7rem;">
+                      {{ merchant.unread_count }}
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-chat-dots" style="font-size: 3rem; color: var(--muted);"></i>
+              <p class="text-muted mt-3">No merchants available</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="col-lg-8">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow); height: calc(100vh - 200px); display: flex; flex-direction: column;">
+        <div id="chat-container">
+          <div class="text-center py-5" style="margin-top: 150px;">
+            <i class="bi bi-chat-left-text" style="font-size: 4rem; color: var(--muted);"></i>
+            <p class="text-muted mt-3" style="font-size: 1.1rem;">Select a merchant to start chatting</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentMerchantId = null;
+
+function loadConversation(merchantId) {
+  currentMerchantId = merchantId;
+  
+  // Update active state
+  document.querySelectorAll('.merchant-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  document.querySelector(`[data-merchant-id="${merchantId}"]`)?.classList.add('active');
+  
+  // Load conversation via AJAX
+  fetch(`/dashboard/chat/conversation/${merchantId}/`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('chat-container').innerHTML = html;
+      scrollToBottom();
+    })
+    .catch(error => {
+      console.error('Error loading conversation:', error);
+      document.getElementById('chat-container').innerHTML = `
+        <div class="alert alert-danger m-3">Failed to load conversation</div>
+      `;
+    });
+}
+
+function sendMessage() {
+  if (!currentMerchantId) return;
+  
+  const input = document.getElementById('messageInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  
+  fetch('/dashboard/chat/send/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      merchant_id: currentMerchantId,
+      message: message
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      input.value = '';
+      // Append message to chat
+      appendMessage(data.message);
+      scrollToBottom();
+    } else {
+      alert('Failed to send message: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error sending message:', error);
+    alert('Failed to send message');
+  })
+  .finally(() => {
+    sendBtn.disabled = false;
+    input.focus();
+  });
+}
+
+function appendMessage(msg) {
+  const messagesContainer = document.getElementById('messages-container');
+  if (!messagesContainer) return;
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `d-flex ${msg.is_from_admin ? 'justify-content-end' : 'justify-content-start'} mb-3`;
+  messageDiv.innerHTML = `
+    <div class="message-bubble ${msg.is_from_admin ? 'admin-message' : 'merchant-message'}"
+         style="max-width: 70%; padding: 12px 16px; border-radius: 16px; ${msg.is_from_admin ? 'background: var(--accent); color: var(--accent-ink);' : 'background: var(--page); color: var(--text);'}">
+      <p class="mb-1" style="font-size: 0.95rem; line-height: 1.4;">${msg.text}</p>
+      <small class="opacity-75" style="font-size: 0.75rem;">${msg.created_at}</small>
+    </div>
+  `;
+  messagesContainer.appendChild(messageDiv);
+}
+
+function scrollToBottom() {
+  const container = document.getElementById('messages-container');
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Handle Enter key in message input
+document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('keypress', function(e) {
+    if (e.target.id === 'messageInput' && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+});
+</script>
+
+<style>
+.merchant-item {
+  transition: all 0.2s;
+}
+
+.merchant-item:hover {
+  background: var(--page) !important;
+}
+
+.merchant-item.active {
+  background: var(--page) !important;
+  border-left: 3px solid var(--accent) !important;
+}
+
+.avatar-circle {
+  flex-shrink: 0;
+}
+</style>
+{% endblock %}

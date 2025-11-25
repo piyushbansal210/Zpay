@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ZPay Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2ecc71;
+            margin-bottom: 5px;
+        }
+        .login-subtitle {
+            color: #666;
+            font-size: 15px;
+        }
+        .user-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            background: #2ecc71;
+            border-radius: 12px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .btn-login:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+        .form-control {
+            border-radius: 12px;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #2ecc71;
+            box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+            outline: none;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-label i {
+            color: #2ecc71;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .alert {
+            border-radius: 12px;
+            font-size: 14px;
+            border: none;
+        }
+        .footer-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #999;
+        }
+        .footer-text i {
+            color: #2ecc71;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #2ecc71;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+        .info-box i {
+            color: #2ecc71;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="login-header">
+            <div class="user-type-badge">
+                <i class="bi bi-buildings"></i>
+                <span>ADMIN</span>
+                <span style="opacity: 0.5;">|</span>
+                <i class="bi bi-shop"></i>
+                <span>MERCHANT</span>
+            </div>
+            
+            <div class="login-title">
+                <i class="bi bi-building"></i> ZPay
+            </div>
+            <div class="login-subtitle">Welcome Back</div>
+        </div>
+        
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="POST" action="">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-person-circle"></i>
+                    Email or Username
+                </label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    class="form-control" 
+                    placeholder="Enter your email or username"
+                    required 
+                    autofocus>
+                <div class="help-text">
+                    You can use either your email address or username
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-lock-fill"></i>
+                    Password
+                </label>
+                <input 
+                    type="password" 
+                    name="password" 
+                    class="form-control" 
+                    placeholder="Enter your password"
+                    required>
+            </div>
+            
+            <button type="submit" class="btn btn-login">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+        
+        <div class="info-box">
+            <i class="bi bi-info-circle-fill"></i>
+            <strong>Auto-redirect:</strong> You'll be automatically sent to your dashboard based on your account type.
+        </div>
+        
+        <div class="footer-text">
+            <i class="bi bi-shield-check"></i> Secure Login
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

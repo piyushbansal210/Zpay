@@ -1,0 +1,641 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Ticket Status
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View and manage payin ticket statuses</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="exportBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-download"></i> Export
+      </button>
+      <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Total Tickets</p>
+              <h4 class="mb-0 fw-bold" id="totalTickets" style="color: var(--text);">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #e0f2fe; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-ticket-detailed" style="font-size: 1.5rem; color: #0369a1;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Pending</p>
+              <h4 class="mb-0 fw-bold" id="pendingTickets" style="color: #c2410c;">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #ffedd5; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-clock-fill" style="font-size: 1.5rem; color: #c2410c;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Closed</p>
+              <h4 class="mb-0 fw-bold" id="closedTickets" style="color: #15803d;">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #dcfce7; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-check-circle-fill" style="font-size: 1.5rem; color: #15803d;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter and Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              id="searchTicket" 
+              class="form-control ps-5" 
+              placeholder="Search by PG Ref, Merchant Ref, or Business Name..."
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 40px; background: var(--bg); font-size: 0.9rem;">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="btn-group w-100" role="group">
+            <button type="button" id="pendingTab" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px 0 0 10px; padding: 12px 20px; font-weight: 600;">
+              <i class="bi bi-clock-fill me-2"></i>Pending
+            </button>
+            <button type="button" id="closedTab" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 0 10px 10px 0; padding: 12px 20px; font-weight: 600;">
+              <i class="bi bi-check-circle-fill me-2"></i>Closed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tickets Table -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Merchant Ref</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">PG Ref</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">PG Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Error Code</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Amount</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="ticketList">
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading tickets...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing page <span id="currentPage">1</span> - <span id="currentStatus">Pending</span> tickets
+    </div>
+    <nav>
+      <ul class="pagination mb-0">
+        <li class="page-item" id="prevPageItem">
+          <a class="page-link" href="#" id="prevPage" 
+            style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" id="nextPageItem">
+          <a class="page-link" href="#" id="nextPage" 
+            style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let ticketsData = [];
+let currentStatus = 'pending';
+let currentPage = 1;
+let isLoading = false;
+let searchTimeout = null;
+const API_TIMEOUT = 15000;
+
+function initTicketStatusPage() {
+  console.log('Initializing Ticket Status Page...');
+  setupEventListeners();
+  loadTickets();
+}
+
+function setupEventListeners() {
+  const pendingTab = document.getElementById('pendingTab');
+  const closedTab = document.getElementById('closedTab');
+  const searchInput = document.getElementById('searchTicket');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+
+  if (pendingTab) {
+    pendingTab.addEventListener('click', () => switchTab('pending'));
+  }
+
+  if (closedTab) {
+    closedTab.addEventListener('click', () => switchTab('closed'));
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        currentPage = 1;
+        loadTickets();
+      }, 400);
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadTickets);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportTickets);
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentPage > 1) {
+        currentPage--;
+        loadTickets();
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentPage++;
+      loadTickets();
+    });
+  }
+}
+
+function switchTab(status) {
+  currentStatus = status;
+  currentPage = 1;
+
+  const pendingTab = document.getElementById('pendingTab');
+  const closedTab = document.getElementById('closedTab');
+
+  if (status === 'pending') {
+    pendingTab.style.background = 'var(--accent)';
+    pendingTab.style.color = 'var(--accent-ink)';
+    pendingTab.style.border = 'none';
+
+    closedTab.style.background = 'var(--page)';
+    closedTab.style.color = 'var(--text)';
+    closedTab.style.border = '1px solid var(--stroke)';
+  } else {
+    closedTab.style.background = 'var(--accent)';
+    closedTab.style.color = 'var(--accent-ink)';
+    closedTab.style.border = 'none';
+
+    pendingTab.style.background = 'var(--page)';
+    pendingTab.style.color = 'var(--text)';
+    pendingTab.style.border = '1px solid var(--stroke)';
+  }
+
+  document.getElementById('currentStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  loadTickets();
+}
+
+async function loadTickets() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('ticketList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Fetching ${currentStatus} tickets...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const searchQuery = document.getElementById('searchTicket').value.trim();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/api/easebuzz/payin_ticket_status/?status=${currentStatus}&page=${currentPage}&q=${encodeURIComponent(searchQuery)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Ticket Status API Response:', data);
+
+    if (data.status === 1 && data.tickets && data.tickets.length > 0) {
+      ticketsData = data.tickets;
+      renderTable(ticketsData);
+      updateStats();
+      updatePagination();
+      showToast('Tickets loaded successfully', 'success');
+    } else {
+      ticketsData = [];
+      renderEmptyTable(data.message || `No ${currentStatus} tickets found`);
+      updateStats();
+    }
+
+  } catch (error) {
+    console.error('Error loading tickets:', error);
+    
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load tickets. ' + error.message);
+      showToast('Failed to load tickets', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function updateStats() {
+  // In a real scenario, you'd get these from a separate API call or the main response
+  // For now, we'll update based on current data
+  const totalTickets = ticketsData.length;
+  
+  document.getElementById('totalTickets').textContent = totalTickets;
+  
+  if (currentStatus === 'pending') {
+    document.getElementById('pendingTickets').textContent = totalTickets;
+  } else {
+    document.getElementById('closedTickets').textContent = totalTickets;
+  }
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('ticketList');
+
+  if (!data || data.length === 0) {
+    renderEmptyTable(`No ${currentStatus} tickets found`);
+    return;
+  }
+
+  tbody.innerHTML = data.map(ticket => {
+    const merchantRef = ticket.merchant_ref || '-';
+    const pgRef = ticket.pg_ref || '-';
+    const pgStatus = ticket.pg_status || 'Unknown';
+    const businessName = ticket.business_name || '-';
+    const errorCode = ticket.error_code || '-';
+    const amount = parseFloat(ticket.amount || 0);
+
+    let statusColor, statusBg, statusBorder;
+    const statusLower = pgStatus.toLowerCase();
+    
+    if (statusLower === 'success') {
+      statusColor = '#15803d';
+      statusBg = '#dcfce7';
+      statusBorder = '#bbf7d0';
+    } else if (statusLower === 'pending' || statusLower === 'initiated') {
+      statusColor = '#c2410c';
+      statusBg = '#ffedd5';
+      statusBorder = '#fed7aa';
+    } else {
+      statusColor = '#b91c1c';
+      statusBg = '#fee2e2';
+      statusBorder = '#fecaca';
+    }
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${merchantRef}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${pgRef}
+        </td>
+        <td style="padding: 16px 20px;">
+          <span class="badge" style="background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusBorder}; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${pgStatus}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-building me-2" style="color: var(--accent);"></i>${businessName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${errorCode !== '-' ? `<span style="background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">${errorCode}</span>` : '-'}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 700;">
+          ${formatCurrency(amount)}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick="refreshTicket('${pgRef}')" title="Refresh Status" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 12px;">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No tickets found') {
+  const tbody = document.getElementById('ticketList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-ticket-detailed" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Tickets</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function updatePagination() {
+  const paginationContainer = document.getElementById('paginationContainer');
+  const currentPageSpan = document.getElementById('currentPage');
+  const prevPageItem = document.getElementById('prevPageItem');
+  const nextPageItem = document.getElementById('nextPageItem');
+
+  if (ticketsData.length === 0) {
+    paginationContainer.style.display = 'none';
+    return;
+  }
+
+  paginationContainer.style.display = 'flex';
+  currentPageSpan.textContent = currentPage;
+
+  if (currentPage === 1) {
+    prevPageItem.classList.add('disabled');
+  } else {
+    prevPageItem.classList.remove('disabled');
+  }
+
+  if (ticketsData.length < 20) {
+    nextPageItem.classList.add('disabled');
+  } else {
+    nextPageItem.classList.remove('disabled');
+  }
+}
+
+function refreshTicket(pgRef) {
+  showToast(`Refreshing ticket status for ${pgRef}...`, 'info');
+  // Add your refresh logic here
+  setTimeout(() => {
+    loadTickets();
+  }, 1000);
+}
+
+function exportTickets() {
+  if (!ticketsData || ticketsData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  try {
+    const csvContent = [
+      [`Ticket Status Export (${currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}) - ` + new Date().toLocaleDateString()],
+      [''],
+      ['Merchant Ref', 'PG Ref', 'PG Status', 'Business Name', 'Error Code', 'Amount'],
+      ...ticketsData.map(t => [
+        t.merchant_ref || '-',
+        t.pg_ref || '-',
+        t.pg_status || '-',
+        t.business_name || '-',
+        t.error_code || '-',
+        t.amount || 0
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ticket_status_${currentStatus}_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showToast('Tickets exported successfully', 'success');
+  } catch (error) {
+    console.error('Error exporting tickets:', error);
+    showToast('Failed to export tickets', 'error');
+  }
+}
+
+function formatCurrency(amount) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount || 0);
+  } catch (e) {
+    return '₹' + (amount || 0);
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  
+  const iconMap = {
+    success: 'check-circle',
+    error: 'exclamation-circle',
+    info: 'info-circle',
+    warning: 'exclamation-triangle'
+  };
+  
+  const alertMap = {
+    success: 'success',
+    error: 'danger',
+    info: 'info',
+    warning: 'warning'
+  };
+  
+  toast.innerHTML = `
+    <div class="alert alert-${alertMap[type] || 'info'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow); min-width: 300px;">
+      <i class="bi bi-${iconMap[type] || 'info-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    const alert = toast.querySelector('.alert');
+    if (alert) {
+      alert.classList.remove('show');
+      setTimeout(() => toast.remove(), 150);
+    }
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Initialize page on load
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('ticketList')) {
+    initTicketStatusPage();
+  }
+});
+
+// Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#ticketList')) {
+    setTimeout(initTicketStatusPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn {
+  margin: 0 !important;
+}
+
+.btn-group .btn:first-child {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.btn-group .btn:last-child {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+.alert {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>

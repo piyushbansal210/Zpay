@@ -1,0 +1,528 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Flagged Transactions</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Monitor and manage transactions flagged for review</p>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 24px;">
+      
+      <!-- Search and Filters Section -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">Flag Type</label>
+          <select id="flagType" class="form-select" style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--page);">
+            <option value="">All Flags</option>
+            <option value="fraud">🚨 Fraud</option>
+            <option value="mismatch">⚠️ Mismatch</option>
+            <option value="chargeback">💳 Chargeback Risk</option>
+            <option value="manual">👤 Manual Review</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">Search</label>
+          <div class="position-relative">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            <input type="text" id="searchFlag" class="form-control" placeholder="Search by PG Ref, Merchant Ref, Business Name..." 
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 40px; background: var(--page);">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">&nbsp;</label>
+          <div class="d-flex gap-2">
+            <button id="exportBtn" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 10px 20px; font-weight: 600; flex: 1;">
+              <i class="bi bi-download"></i> Export
+            </button>
+            <button id="refreshBtn" class="btn" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px;">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="status-filter-btn active" data-status="all" style="border: 1px solid var(--stroke); background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-list-ul"></i> All
+        </button>
+        <button class="status-filter-btn" data-status="Open" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-exclamation-circle-fill text-warning"></i> Open
+        </button>
+        <button class="status-filter-btn" data-status="Under Review" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-hourglass-split" style="color: #4A90E2;"></i> Under Review
+        </button>
+        <button class="status-filter-btn" data-status="Closed" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-check-circle-fill text-success"></i> Closed
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="table align-middle" style="border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr style="background: var(--page); border-radius: 10px;">
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-calendar"></i> Date
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">PG Ref</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Merchant Ref</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-building"></i> Business
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Amount</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Currency</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-flag"></i> Flag Type
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Reason</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Status</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Created By</th>
+            </tr>
+          </thead>
+          <tbody id="flagBody">
+            <tr>
+              <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+                <div class="spinner-border" style="color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching flagged transactions...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State (Hidden by default) -->
+      <div id="emptyState" class="text-center py-5" style="display: none;">
+        <div class="mb-3" style="font-size: 64px; color: var(--muted); opacity: 0.3;">
+          <i class="bi bi-flag"></i>
+        </div>
+        <h5 class="fw-semibold mb-2" style="color: var(--text);">No Flagged Transactions</h5>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">There are no flagged transactions matching your criteria.</p>
+        <button onclick="clearFilters()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+          <i class="bi bi-arrow-clockwise"></i> Clear Filters
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--stroke);" id="paginationSection">
+        <div style="color: var(--muted); font-size: 0.875rem;">
+          Showing page <span class="fw-semibold" style="color: var(--text);" id="currentPage">1</span> of <span class="fw-semibold" style="color: var(--text);" id="totalPages">1</span>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="prevPage" class="btn btn-sm" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button id="nextPage" class="btn btn-sm" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; border-radius: 12px; box-shadow: var(--shadow);">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage" style="color: white; font-weight: 500;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let statusFilter = "all";
+let allFlags = [];
+let searchTimeout;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Load initial data
+  loadFlags();
+
+  // Event Listeners
+  document.getElementById("searchFlag").addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      loadFlags();
+    }, 500); // Debounce search
+  });
+
+  document.getElementById("flagType").addEventListener("change", () => {
+    currentPage = 1;
+    loadFlags();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", downloadReport);
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    currentPage = 1;
+    loadFlags();
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadFlags();
+    }
+  });
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadFlags();
+    }
+  });
+
+  // Status Filter buttons
+  document.querySelectorAll(".status-filter-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".status-filter-btn").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "transparent";
+        b.style.color = "var(--text)";
+      });
+      
+      this.classList.add("active");
+      this.style.background = "var(--accent)";
+      this.style.color = "var(--accent-ink)";
+      
+      statusFilter = this.getAttribute("data-status");
+      filterFlags();
+    });
+  });
+});
+
+async function loadFlags() {
+  const tbody = document.getElementById("flagBody");
+  const emptyState = document.getElementById("emptyState");
+  const paginationSection = document.getElementById("paginationSection");
+  const search = document.getElementById("searchFlag").value.trim();
+  const flagType = document.getElementById("flagType").value;
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+        <div class="spinner-border" style="color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching flagged transactions...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const url = `/api/jiopay/payin_flag_transactions/?page=${currentPage}&search=${encodeURIComponent(search)}&flag_type=${flagType}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const records = data.records || [];
+    totalPages = data.total_pages || 1;
+    
+    document.getElementById("currentPage").textContent = currentPage;
+    document.getElementById("totalPages").textContent = totalPages;
+
+    if (records.length === 0) {
+      tbody.style.display = "none";
+      emptyState.style.display = "block";
+      paginationSection.style.display = "none";
+      return;
+    }
+
+    allFlags = records;
+    filterFlags();
+    paginationSection.style.display = "flex";
+
+    // Update pagination button states
+    updatePaginationButtons();
+
+  } catch (err) {
+    console.error("Error loading flags:", err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+          <div style="font-size: 48px; color: #E74C3C; opacity: 0.5; margin-bottom: 16px;">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h6 class="fw-semibold mb-2" style="color: var(--text);">Failed to Load Data</h6>
+          <p class="text-muted mb-3" style="font-size: 0.9rem;">Unable to fetch flagged transactions. Please try again.</p>
+          <button onclick="loadFlags()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 8px 20px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function filterFlags() {
+  let filtered = allFlags;
+  
+  if (statusFilter !== "all") {
+    filtered = filtered.filter(r => r.status === statusFilter);
+  }
+  
+  renderFlags(filtered);
+}
+
+function renderFlags(flags) {
+  const tbody = document.getElementById("flagBody");
+  const emptyState = document.getElementById("emptyState");
+
+  if (flags.length === 0) {
+    tbody.style.display = "none";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  tbody.innerHTML = "";
+
+  flags.forEach((r) => {
+    const row = document.createElement("tr");
+    row.style.borderBottom = "1px solid var(--stroke)";
+    row.style.transition = "background 0.2s ease";
+    row.onmouseenter = () => row.style.background = "var(--page)";
+    row.onmouseleave = () => row.style.background = "transparent";
+
+    // Flag Type badge with colors
+    let flagBadge = "";
+    if (r.flag_type === "fraud") {
+      flagBadge = `<span class="badge rounded-pill" style="background: #F8D7DA; color: #721C24; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-exclamation-triangle-fill me-1"></i> Fraud</span>`;
+    } else if (r.flag_type === "mismatch") {
+      flagBadge = `<span class="badge rounded-pill" style="background: #CFE2FF; color: #084298; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-exclamation-circle-fill me-1"></i> Mismatch</span>`;
+    } else if (r.flag_type === "chargeback") {
+      flagBadge = `<span class="badge rounded-pill" style="background: #FFE5B4; color: #8B4513; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-credit-card me-1"></i> Chargeback Risk</span>`;
+    } else if (r.flag_type === "manual") {
+      flagBadge = `<span class="badge rounded-pill" style="background: #E2E3E5; color: #41464B; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-person-fill me-1"></i> Manual Review</span>`;
+    } else {
+      flagBadge = `<span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.flag_type || "-"}</span>`;
+    }
+
+    // Status badge
+    let statusBadge = "";
+    if (r.status === "Closed") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #D4EDDA; color: #155724; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> Closed</span>`;
+    } else if (r.status === "Open") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #FFF3CD; color: #856404; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-exclamation-circle-fill me-1"></i> Open</span>`;
+    } else if (r.status === "Under Review") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #D1ECF1; color: #0C5460; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-hourglass-split me-1"></i> Under Review</span>`;
+    } else {
+      statusBadge = `<span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.status || "-"}</span>`;
+    }
+
+    row.innerHTML = `
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-calendar3" style="color: var(--muted); font-size: 0.875rem;"></i>
+          <span style="color: var(--text); font-size: 0.875rem;">${r.date || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--page); border-radius: 6px;">
+            <i class="bi bi-hash" style="color: var(--accent); font-size: 0.875rem;"></i>
+          </div>
+          <span style="color: var(--text); font-size: 0.875rem; font-family: monospace;">${r.pg_ref || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span style="color: var(--text); font-size: 0.875rem; font-family: monospace;">${r.merchant_ref || "-"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--page); border-radius: 6px;">
+            <i class="bi bi-building" style="color: var(--accent); font-size: 0.875rem;"></i>
+          </div>
+          <span style="color: var(--text); font-size: 0.875rem; font-weight: 500;">${r.business_name || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="fw-bold" style="color: var(--accent); font-size: 0.9rem;">₹${parseFloat(r.amount || 0).toFixed(2)}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.currency || "INR"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        ${flagBadge}
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span style="color: var(--muted); font-size: 0.875rem;">${r.reason || "-"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        ${statusBadge}
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span style="color: var(--muted); font-size: 0.875rem;">${r.created_by || "-"}</span>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function updatePaginationButtons() {
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+
+  if (currentPage <= 1) {
+    prevBtn.disabled = true;
+    prevBtn.style.opacity = "0.5";
+    prevBtn.style.cursor = "not-allowed";
+  } else {
+    prevBtn.disabled = false;
+    prevBtn.style.opacity = "1";
+    prevBtn.style.cursor = "pointer";
+  }
+
+  if (currentPage >= totalPages) {
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = "0.5";
+    nextBtn.style.cursor = "not-allowed";
+  } else {
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = "1";
+    nextBtn.style.cursor = "pointer";
+  }
+}
+
+function downloadReport() {
+  const search = document.getElementById("searchFlag").value.trim();
+  const flagType = document.getElementById("flagType").value;
+  const url = `/api/jiopay/payin_flag_transactions/?export=csv&flag_type=${flagType}&search=${encodeURIComponent(search)}`;
+  window.open(url, "_blank");
+  showToast("Downloading flag report...", "success");
+}
+
+function clearFilters() {
+  document.getElementById("searchFlag").value = "";
+  document.getElementById("flagType").value = "";
+  currentPage = 1;
+  statusFilter = "all";
+  
+  // Reset filter buttons
+  document.querySelectorAll(".status-filter-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.background = "transparent";
+    b.style.color = "var(--text)";
+  });
+  document.querySelector('.status-filter-btn[data-status="all"]').classList.add("active");
+  document.querySelector('.status-filter-btn[data-status="all"]').style.background = "var(--accent)";
+  document.querySelector('.status-filter-btn[data-status="all"]').style.color = "var(--accent-ink)";
+  
+  loadFlags();
+}
+
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+  
+  toastMessage.textContent = message;
+  
+  if (type === "success") {
+    toast.style.background = "linear-gradient(135deg, var(--accent), #9bc963)";
+  } else {
+    toast.style.background = "linear-gradient(135deg, #E74C3C, #C0392B)";
+  }
+  
+  toast.style.display = "block";
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 3000);
+}
+</script>
+
+<style>
+/* Filter button hover effects */
+.status-filter-btn {
+  cursor: pointer;
+}
+
+.status-filter-btn:hover:not(.active) {
+  background: var(--page) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Table hover effect */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+/* Button hover effects */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Form control focus */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Toast animation */
+#toast {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Pagination button states */
+#prevPage:disabled,
+#nextPage:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .card-body {
+    padding: 16px !important;
+  }
+  
+  .row.g-3 {
+    flex-direction: column;
+  }
+  
+  .status-filter-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+  }
+}
+</style>

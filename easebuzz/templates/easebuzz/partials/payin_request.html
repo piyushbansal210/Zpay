@@ -1,0 +1,626 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+      Payin Requests
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View and manage all payin transaction requests</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="downloadPayin" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
+      <button id="refreshPayin" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Total Requests</p>
+              <h4 class="mb-0 fw-bold" id="totalRequests" style="color: var(--text);">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #e0f2fe; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-receipt-cutoff" style="font-size: 1.5rem; color: #0369a1;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Success</p>
+              <h4 class="mb-0 fw-bold" id="successRequests" style="color: #15803d;">0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #dcfce7; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-check-circle-fill" style="font-size: 1.5rem; color: #15803d;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Requested Amount</p>
+              <h4 class="mb-0 fw-bold" id="totalRequestedAmount" style="color: var(--text);">₹0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #ffedd5; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-currency-rupee" style="font-size: 1.5rem; color: #c2410c;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 20px;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Captured Amount</p>
+              <h4 class="mb-0 fw-bold" id="totalCapturedAmount" style="color: #15803d;">₹0</h4>
+            </div>
+            <div style="width: 48px; height: 48px; background: #dcfce7; border-radius: 12px; display: grid; place-items: center;">
+              <i class="bi bi-cash-stack" style="font-size: 1.5rem; color: #15803d;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="position-relative">
+        <input 
+          type="text" 
+          id="searchPayin" 
+          class="form-control ps-5" 
+          placeholder="Search by PG Ref, Merchant Ref, Business Name, or Customer details..."
+          style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 40px; background: var(--bg); font-size: 0.9rem;">
+        <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payin Requests Table -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke); position: sticky; top: 0; z-index: 10;">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Created At</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">PG Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">PG Ref</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Merchant Ref</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Routing</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Method</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Currency</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Requested</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Captured</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Customer Email</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Customer Mobile</th>
+            </tr>
+          </thead>
+          <tbody id="payinList">
+            <tr>
+              <td colspan="12" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading payin requests...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+    </div>
+    <nav>
+      <ul class="pagination mb-0">
+        <li class="page-item" id="prevPageItem">
+          <a class="page-link" href="#" id="prevPage" 
+            style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" id="nextPageItem">
+          <a class="page-link" href="#" id="nextPage" 
+            style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let payinData = [];
+let currentPage = 1;
+let isLoading = false;
+let searchTimeout = null;
+const API_TIMEOUT = 15000;
+
+function initPayinRequestPage() {
+  console.log('Initializing Payin Request Page...');
+  setupEventListeners();
+  loadPayinList();
+}
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchPayin');
+  const refreshBtn = document.getElementById('refreshPayin');
+  const exportBtn = document.getElementById('downloadPayin');
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        currentPage = 1;
+        loadPayinList();
+      }, 500);
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadPayinList);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportPayinReport);
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentPage > 1) {
+        currentPage--;
+        loadPayinList();
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentPage++;
+      loadPayinList();
+    });
+  }
+}
+
+async function loadPayinList() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshPayin');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('payinList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="12" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Fetching payin requests...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const searchQuery = document.getElementById('searchPayin').value.trim();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/api/easebuzz/payin_request_list/?q=${encodeURIComponent(searchQuery)}&page=${currentPage}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Payin Request API Response:', data);
+
+    if (data.status === 1 && data.records && data.records.length > 0) {
+      payinData = data.records;
+      renderTable(payinData);
+      updateStats(payinData);
+      updatePagination();
+      showToast('Payin requests loaded successfully', 'success');
+    } else {
+      payinData = [];
+      renderEmptyTable(data.message || 'No payin requests found');
+      updateStats([]);
+    }
+
+  } catch (error) {
+    console.error('Error loading payin requests:', error);
+    
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load payin requests. ' + error.message);
+      showToast('Failed to load payin requests', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function updateStats(data) {
+  const totalRequests = data.length;
+  const successRequests = data.filter(r => r.pg_status === 'Success').length;
+  const totalRequestedAmount = data.reduce((sum, r) => sum + parseFloat(r.requested_amount || 0), 0);
+  const totalCapturedAmount = data.reduce((sum, r) => sum + parseFloat(r.captured_amount || 0), 0);
+
+  document.getElementById('totalRequests').textContent = totalRequests;
+  document.getElementById('successRequests').textContent = successRequests;
+  document.getElementById('totalRequestedAmount').textContent = formatCurrency(totalRequestedAmount);
+  document.getElementById('totalCapturedAmount').textContent = formatCurrency(totalCapturedAmount);
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('payinList');
+
+  if (!data || data.length === 0) {
+    renderEmptyTable('No payin requests found');
+    return;
+  }
+
+  tbody.innerHTML = data.map(request => {
+    const createdAt = request.created_at || '-';
+    const pgStatus = request.pg_status || 'Unknown';
+    const pgRef = request.pg_ref || '-';
+    const merchantRef = request.merchant_ref || '-';
+    const routing = request.routing || '-';
+    const businessName = request.business_name || '-';
+    const payinMethod = request.payin_method || '-';
+    const currency = request.currency || 'INR';
+    const requestedAmount = parseFloat(request.requested_amount || 0);
+    const capturedAmount = parseFloat(request.captured_amount || 0);
+    const customerEmail = request.customer_email || '-';
+    const customerMobile = request.customer_mobile || '-';
+
+    let statusColor, statusBg, statusBorder;
+    const statusLower = pgStatus.toLowerCase();
+    
+    if (statusLower === 'success') {
+      statusColor = '#15803d';
+      statusBg = '#dcfce7';
+      statusBorder = '#bbf7d0';
+    } else if (statusLower === 'pending' || statusLower === 'initiated') {
+      statusColor = '#c2410c';
+      statusBg = '#ffedd5';
+      statusBorder = '#fed7aa';
+    } else {
+      statusColor = '#b91c1c';
+      statusBg = '#fee2e2';
+      statusBorder = '#fecaca';
+    }
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          <i class="bi bi-calendar3 me-2"></i>${formatDateTime(createdAt)}
+        </td>
+        <td style="padding: 16px 20px;">
+          <span class="badge" style="background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusBorder}; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${pgStatus}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${pgRef}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${merchantRef}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${routing}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-building me-2" style="color: var(--accent);"></i>${businessName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <span style="background: var(--page); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--stroke);">
+            ${payinMethod}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          ${currency}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 700;">
+          ${formatCurrency(requestedAmount)}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: #15803d; font-size: 0.875rem; font-weight: 700;">
+          ${formatCurrency(capturedAmount)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          ${customerEmail !== '-' ? `<i class="bi bi-envelope me-2" style="color: var(--muted);"></i>${customerEmail}` : '-'}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${customerMobile !== '-' ? `<i class="bi bi-phone me-2" style="color: var(--muted);"></i>${customerMobile}` : '-'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No payin requests found') {
+  const tbody = document.getElementById('payinList');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="12" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-receipt-cutoff" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Payin Requests</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function updatePagination() {
+  const paginationContainer = document.getElementById('paginationContainer');
+  const currentPageSpan = document.getElementById('currentPage');
+  const prevPageItem = document.getElementById('prevPageItem');
+  const nextPageItem = document.getElementById('nextPageItem');
+
+  if (payinData.length === 0) {
+    paginationContainer.style.display = 'none';
+    return;
+  }
+
+  paginationContainer.style.display = 'flex';
+  currentPageSpan.textContent = currentPage;
+
+  if (currentPage === 1) {
+    prevPageItem.classList.add('disabled');
+  } else {
+    prevPageItem.classList.remove('disabled');
+  }
+
+  if (payinData.length < 20) {
+    nextPageItem.classList.add('disabled');
+  } else {
+    nextPageItem.classList.remove('disabled');
+  }
+}
+
+async function exportPayinReport() {
+  if (!payinData || payinData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  try {
+    const searchQuery = document.getElementById('searchPayin').value.trim();
+    const url = `/api/easebuzz/download_payin_report/?q=${encodeURIComponent(searchQuery)}`;
+    
+    showToast('Downloading report...', 'info');
+    window.location.href = url;
+    
+    setTimeout(() => {
+      showToast('Report downloaded successfully', 'success');
+    }, 1000);
+
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    showToast('Failed to export report', 'error');
+  }
+}
+
+function formatCurrency(amount) {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount || 0);
+  } catch (e) {
+    return '₹' + (amount || 0);
+  }
+}
+
+function formatDateTime(dateString) {
+  try {
+    if (!dateString || dateString === '-') return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  
+  const iconMap = {
+    success: 'check-circle',
+    error: 'exclamation-circle',
+    info: 'info-circle',
+    warning: 'exclamation-triangle'
+  };
+  
+  const alertMap = {
+    success: 'success',
+    error: 'danger',
+    info: 'info',
+    warning: 'warning'
+  };
+  
+  toast.innerHTML = `
+    <div class="alert alert-${alertMap[type] || 'info'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow); min-width: 300px;">
+      <i class="bi bi-${iconMap[type] || 'info-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    const alert = toast.querySelector('.alert');
+    if (alert) {
+      alert.classList.remove('show');
+      setTimeout(() => toast.remove(), 150);
+    }
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Initialize page on load
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('payinList')) {
+    initPayinRequestPage();
+  }
+});
+
+// Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#payinList')) {
+    setTimeout(initPayinRequestPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+.alert {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>

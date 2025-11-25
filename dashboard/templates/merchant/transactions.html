@@ -1,0 +1,56 @@
+{% extends "merchant/base.html" %}
+
+{% block title %}Transactions - {{ merchant.merchant_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Transactions</h2>
+        <button class="btn btn-primary"
+            style="background-color: var(--accent); border-color: var(--accent); color: var(--accent-ink);">
+            <i class="bi bi-download"></i> Export
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 p-3">Transaction ID</th>
+                            <th class="border-0 p-3">Date</th>
+                            <th class="border-0 p-3">Type</th>
+                            <th class="border-0 p-3">Amount</th>
+                            <th class="border-0 p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td class="p-3 fw-medium">{{ txn.transaction_id }}</td>
+                            <td class="p-3 text-muted">{{ txn.created_at|date:"M d, Y h:i A" }}</td>
+                            <td class="p-3">{{ txn.transaction_type }}</td>
+                            <td class="p-3 fw-bold">₹{{ txn.amount }}</td>
+                            <td class="p-3">
+                                <span
+                                    class="badge {% if txn.status == 'SUCCESS' %}bg-success{% elif txn.status == 'PENDING' %}bg-warning{% else %}bg-danger{% endif %} rounded-pill">
+                                    {{ txn.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center p-5 text-muted">
+                                <i class="bi bi-receipt display-4 mb-3 d-block"></i>
+                                No transactions found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

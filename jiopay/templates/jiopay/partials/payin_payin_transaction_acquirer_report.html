@@ -1,0 +1,367 @@
+{% load static %}
+
+<div class="page">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        <i class="bi bi-bank" style="color: var(--accent);"></i> Acquirer Report
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View acquirer-wise payin performance & metrics</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button id="downloadAcquirer" class="btn" 
+        style="background: var(--page); border: 1px solid var(--stroke); color: var(--text);
+               border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
+
+      <button id="refreshAcquirer" class="btn" 
+        style="background: var(--accent); border: none; color: var(--accent-ink);
+               border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+
+    <!-- Total Transactions -->
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="stat-title">Total Transactions</p>
+              <h4 class="stat-value" id="acqTotalTxns">0</h4>
+            </div>
+            <div class="stat-icon" style="background:#e0f2fe;">
+              <i class="bi bi-receipt-cutoff" style="color:#0369a1; font-size:1.4rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Volume -->
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="stat-title">Total Volume (₹)</p>
+              <h4 class="stat-value" id="acqTotalVolume">₹0</h4>
+            </div>
+            <div class="stat-icon" style="background:#ffedd5;">
+              <i class="bi bi-currency-rupee" style="color:#c2410c; font-size:1.4rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Rate -->
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="stat-title">Success Rate</p>
+              <h4 class="stat-value" id="acqSuccessRate">0%</h4>
+            </div>
+            <div class="stat-icon" style="background:#dcfce7;">
+              <i class="bi bi-check-circle-fill" style="color:#15803d; font-size:1.4rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chargebacks -->
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="stat-title">Chargebacks</p>
+              <h4 class="stat-value text-danger" id="acqChargebacks">0</h4>
+            </div>
+            <div class="stat-icon" style="background:#fee2e2;">
+              <i class="bi bi-exclamation-octagon-fill" style="color:#b91c1c; font-size:1.4rem;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Filters -->
+  <div class="card border-0 rounded-4 mb-4" 
+       style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding:20px;">
+
+      <div class="row g-3">
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem;">From Date</label>
+          <input type="date" id="fromDate" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem;">To Date</label>
+          <input type="date" id="toDate" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium" style="color: var(--muted); font-size: 0.8rem;">Search</label>
+          <input type="text" id="searchAcquirer" class="form-control"
+                 placeholder="Search Acquirer / Bank">
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+          <button id="applyFilters" class="btn"
+                  style="background: var(--accent); color: var(--accent-ink);
+                         font-weight:600; border-radius:10px; padding:10px 20px; width:100%;">
+            <i class="bi bi-funnel-fill"></i> Apply
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 rounded-4"
+       style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body p-0">
+
+      <div class="table-responsive" style="max-height:600px; overflow-y:auto;">
+        <table class="table table-hover mb-0">
+          <thead style="background: var(--page); border-bottom:2px solid var(--stroke); position:sticky; top:0; z-index:10;">
+            <tr>
+              <th style="padding:16px; font-weight:600;">Acquirer Bank</th>
+              <th style="padding:16px; font-weight:600;">Total Txns</th>
+              <th style="padding:16px; font-weight:600;">Success</th>
+              <th style="padding:16px; font-weight:600;">Failed</th>
+              <th style="padding:16px; font-weight:600;">Chargeback</th>
+              <th style="padding:16px; font-weight:600;">Volume (₹)</th>
+              <th style="padding:16px; font-weight:600;">Success Rate (%)</th>
+              <th style="padding:16px; font-weight:600;">Settlement Amount (₹)</th>
+              <th style="padding:16px; font-weight:600;">Last Settlement Date</th>
+            </tr>
+          </thead>
+
+          <tbody id="acquirerBody">
+            <tr>
+              <td colspan="9" class="text-center py-5">
+                <div class="spinner-border" style="color: var(--accent); width:2rem; height:2rem;"></div>
+                <p class="mt-3 text-muted">Loading acquirer report...</p>
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationSection"
+       class="d-flex justify-content-between align-items-center mt-4"
+       style="display:none;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="prevPage" class="btn pag-btn"><i class="bi bi-chevron-left"></i></button>
+      <button id="nextPage" class="btn pag-btn"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </div>
+
+</div>
+
+<!-- JavaScript -->
+<script>
+
+let currentPage = 1;
+let totalPages = 1;
+let searchTimeout = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadAcquirerReport();
+
+  document.getElementById("searchAcquirer").addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      loadAcquirerReport();
+    }, 500);
+  });
+
+  document.getElementById("applyFilters").addEventListener("click", () => {
+    currentPage = 1;
+    loadAcquirerReport();
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadAcquirerReport();
+    }
+  });
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadAcquirerReport();
+    }
+  });
+
+  document.getElementById("refreshAcquirer").addEventListener("click", () => {
+    loadAcquirerReport();
+  });
+
+  document.getElementById("downloadAcquirer").addEventListener("click", exportReport);
+});
+
+async function loadAcquirerReport() {
+
+  const tbody = document.getElementById("acquirerBody");
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="text-center py-5">
+        <div class="spinner-border" style="color: var(--accent); width:2rem; height:2rem;"></div>
+        <p class="mt-3 text-muted">Fetching acquirer data...</p>
+      </td>
+    </tr>
+  `;
+
+  const search = document.getElementById("searchAcquirer").value.trim();
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+
+  const url = `/api/jiopay/payin_acquirer_report/?page=${currentPage}&search=${search}&from_date=${fromDate}&to_date=${toDate}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    totalPages = data.total_pages || 1;
+
+    document.getElementById("acqTotalTxns").innerText = data.summary.total_txns;
+    document.getElementById("acqTotalVolume").innerText = "₹" + data.summary.total_volume;
+    document.getElementById("acqSuccessRate").innerText = data.summary.avg_success_rate + "%";
+    document.getElementById("acqChargebacks").innerText = data.summary.total_chargebacks;
+
+    if (!data.records || data.records.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="9" class="text-center py-5">
+          <i class="bi bi-bank" style="font-size:3rem; opacity:0.3;"></i>
+          <p class="mt-3 fw-semibold" style="color:var(--text);">No Data Found</p>
+          <p class="text-muted" style="font-size:0.9rem;">No acquirer records match your criteria</p>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.records.map(r => `
+      <tr>
+        <td style="padding:16px;">${r.acquirer_bank}</td>
+        <td style="padding:16px;">${r.total_txns}</td>
+        <td style="padding:16px;">${r.success_txns}</td>
+        <td style="padding:16px;">${r.failed_txns}</td>
+        <td style="padding:16px;">${r.chargebacks}</td>
+        <td style="padding:16px;">₹${r.total_volume}</td>
+        <td style="padding:16px;">${r.success_rate}%</td>
+        <td style="padding:16px;">₹${r.settlement_amount}</td>
+        <td style="padding:16px;">${r.last_settlement_date}</td>
+      </tr>
+    `).join("");
+
+    document.getElementById("currentPage").innerText = currentPage;
+    document.getElementById("totalPages").innerText = totalPages;
+
+    document.getElementById("paginationSection").style.display = "flex";
+
+  } catch (err) {
+    tbody.innerHTML = `
+      <tr><td colspan="9" class="text-center py-5 text-danger">Error loading data</td></tr>
+    `;
+  }
+
+}
+
+function exportReport() {
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+  window.open(`/api/jiopay/payin_acquirer_report/?export=csv&from_date=${fromDate}&to_date=${toDate}`, "_blank");
+}
+
+</script>
+
+<!-- Styles -->
+<style>
+
+.stat-card {
+  background: var(--bg);
+  border: 1px solid var(--stroke) !important;
+  box-shadow: var(--shadow);
+  border-radius: 14px !important;
+}
+
+.stat-title {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+}
+
+.pag-btn {
+  background: var(--page);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+}
+
+.pag-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.form-control {
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--page);
+}
+
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(132,195,64,0.15);
+}
+
+</style>

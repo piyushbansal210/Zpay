@@ -1,0 +1,26 @@
+<!-- Brand -->
+<a href="/">
+    <div class="brand">
+        <i class="bi bi-shop"></i><span>{{ merchant.merchant_name }}</span>
+    </div>
+</a>
+
+<nav class="sb-nav">
+
+    <!-- Chat -->
+    <a href="{% url 'merchant_chat' %}"
+        class="sb-link {% if request.resolver_match.url_name == 'merchant_chat' %}active{% endif %}">
+        <i class="bi bi-chat-dots"></i>
+        <span>Chat with Admin</span>
+    </a>
+
+    <!-- Transactions -->
+    <a href="{% url 'merchant_transactions' %}"
+        class="sb-link {% if request.resolver_match.url_name == 'merchant_transactions' %}active{% endif %}">
+        <i class="bi bi-receipt"></i>
+        <span>Show Transactions</span>
+    </a>
+
+</nav>
+
+<footer class="sb-footer">© 2025 ZPay</footer>

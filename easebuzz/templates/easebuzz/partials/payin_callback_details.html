@@ -1,0 +1,456 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Payin Callback Details</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Track and monitor all payin transaction callbacks</p>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 24px;">
+      
+      <!-- Search and Actions Section -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="position-relative">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            <input type="text" id="pgRefInput" class="form-control" placeholder="Search by PG Reference..." 
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 40px; background: var(--page);">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex gap-2 justify-content-end">
+            <button id="searchCallback" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+              <i class="bi bi-search"></i> Search
+            </button>
+            <button id="getReport" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+              <i class="bi bi-download"></i> Download Report
+            </button>
+            <button id="refreshTransaction" class="btn" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px;">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Filters -->
+      <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="filter-btn active" data-status="all" style="border: 1px solid var(--stroke); background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 6px 16px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          All
+        </button>
+        <button class="filter-btn" data-status="Success" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 6px 16px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-check-circle-fill text-success"></i> Success
+        </button>
+        <button class="filter-btn" data-status="Pending" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 6px 16px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-clock-fill text-warning"></i> Pending
+        </button>
+        <button class="filter-btn" data-status="Failed" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 6px 16px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-x-circle-fill text-danger"></i> Failed
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="table align-middle" style="border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr style="background: var(--page); border-radius: 10px;">
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem; width: 60px;">#</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-hash"></i> PG Reference
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-currency-rupee"></i> Amount
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle"></i> Payment Status
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Previous Status</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-clock"></i> Updated At
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="callbackList">
+            <tr>
+              <td colspan="6" style="border: none; padding: 60px 20px; text-align: center;">
+                <div class="spinner-border" style="color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching callback data...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State (Hidden by default) -->
+      <div id="emptyState" class="text-center py-5" style="display: none;">
+        <div class="mb-3" style="font-size: 64px; color: var(--muted); opacity: 0.3;">
+          <i class="bi bi-inbox"></i>
+        </div>
+        <h5 class="fw-semibold mb-2" style="color: var(--text);">No Callback Records Found</h5>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">There are no callback details matching your search.</p>
+        <button onclick="clearSearch()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+          <i class="bi bi-arrow-clockwise"></i> Clear Search
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--stroke);" id="paginationSection">
+        <div style="color: var(--muted); font-size: 0.875rem;">
+          Showing page <span class="fw-semibold" style="color: var(--text);" id="pageNumber">1</span>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="prevPage" class="btn btn-sm" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button id="nextPage" class="btn btn-sm" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; border-radius: 12px; box-shadow: var(--shadow);">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage" style="color: white; font-weight: 500;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentFilter = "all";
+let allCallbacks = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Load initial data
+  loadCallbackDetails();
+
+  // Event Listeners
+  document.getElementById("searchCallback").addEventListener("click", () => {
+    currentPage = 1;
+    loadCallbackDetails();
+  });
+
+  document.getElementById("pgRefInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      currentPage = 1;
+      loadCallbackDetails();
+    }
+  });
+
+  document.getElementById("getReport").addEventListener("click", downloadReport);
+  document.getElementById("refreshTransaction").addEventListener("click", () => {
+    currentPage = 1;
+    loadCallbackDetails();
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    currentPage++;
+    document.getElementById("pageNumber").textContent = currentPage;
+    loadCallbackDetails();
+  });
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      document.getElementById("pageNumber").textContent = currentPage;
+      loadCallbackDetails();
+    }
+  });
+
+  // Filter buttons
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".filter-btn").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "transparent";
+        b.style.color = "var(--text)";
+      });
+      
+      this.classList.add("active");
+      this.style.background = "var(--accent)";
+      this.style.color = "var(--accent-ink)";
+      
+      currentFilter = this.getAttribute("data-status");
+      filterCallbacks();
+    });
+  });
+});
+
+async function loadCallbackDetails() {
+  const tbody = document.getElementById("callbackList");
+  const emptyState = document.getElementById("emptyState");
+  const paginationSection = document.getElementById("paginationSection");
+  const pgRef = document.getElementById("pgRefInput").value.trim();
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" style="border: none; padding: 60px 20px; text-align: center;">
+        <div class="spinner-border" style="color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching callback data...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const res = await fetch(`/api/easebuzz/payin_callback_details/?pg_ref=${encodeURIComponent(pgRef)}&page=${currentPage}`);
+    const data = await res.json();
+
+    if (!data.records || data.records.length === 0) {
+      tbody.style.display = "none";
+      emptyState.style.display = "block";
+      paginationSection.style.display = "none";
+      return;
+    }
+
+    allCallbacks = data.records;
+    filterCallbacks();
+    paginationSection.style.display = "flex";
+
+  } catch (err) {
+    console.error("Error fetching callback details:", err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="border: none; padding: 60px 20px; text-align: center;">
+          <div style="font-size: 48px; color: #E74C3C; opacity: 0.5; margin-bottom: 16px;">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h6 class="fw-semibold mb-2" style="color: var(--text);">Failed to Load Data</h6>
+          <p class="text-muted mb-3" style="font-size: 0.9rem;">Unable to fetch callback details. Please try again.</p>
+          <button onclick="loadCallbackDetails()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 8px 20px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function filterCallbacks() {
+  let filtered = allCallbacks;
+  
+  if (currentFilter !== "all") {
+    filtered = allCallbacks.filter(r => r.payment_status === currentFilter);
+  }
+  
+  renderCallbacks(filtered);
+}
+
+function renderCallbacks(callbacks) {
+  const tbody = document.getElementById("callbackList");
+  const emptyState = document.getElementById("emptyState");
+
+  if (callbacks.length === 0) {
+    tbody.style.display = "none";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  tbody.innerHTML = "";
+
+  callbacks.forEach((r, i) => {
+    const row = document.createElement("tr");
+    row.style.borderBottom = "1px solid var(--stroke)";
+    row.style.transition = "background 0.2s ease";
+    row.onmouseenter = () => row.style.background = "var(--page)";
+    row.onmouseleave = () => row.style.background = "transparent";
+
+    // Status badge styling
+    let statusBadge = "";
+    if (r.payment_status === "Success") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #D4EDDA; color: #155724; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> Success</span>`;
+    } else if (r.payment_status === "Pending") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #FFF3CD; color: #856404; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-clock-fill me-1"></i> Pending</span>`;
+    } else if (r.payment_status === "Failed") {
+      statusBadge = `<span class="badge rounded-pill" style="background: #F8D7DA; color: #721C24; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill me-1"></i> Failed</span>`;
+    } else {
+      statusBadge = `<span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.payment_status}</span>`;
+    }
+
+    row.innerHTML = `
+      <td style="border: none; padding: 16px;">
+        <span class="fw-semibold" style="color: var(--muted); font-size: 0.875rem;">${i + 1}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: var(--page); border-radius: 8px; font-size: 14px;">
+            <i class="bi bi-hash" style="color: var(--accent);"></i>
+          </div>
+          <div>
+            <div class="fw-semibold" style="color: var(--text); font-size: 0.875rem; font-family: monospace;">${r.pg_ref}</div>
+          </div>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="fw-bold" style="color: var(--accent); font-size: 0.9rem;">₹${parseFloat(r.amount || 0).toFixed(2)}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        ${statusBadge}
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span style="color: var(--muted); font-size: 0.875rem;">${r.previous_status || '-'}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-clock" style="color: var(--muted); font-size: 0.875rem;"></i>
+          <span style="color: var(--text); font-size: 0.875rem;">${r.updated_at || '-'}</span>
+        </div>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function downloadReport() {
+  const pgRef = document.getElementById("pgRefInput").value.trim();
+  
+  if (!pgRef) {
+    showToast("Please enter a PG Reference to download report", "error");
+    return;
+  }
+
+  window.location.href = `/api/easebuzz/download_callback_report/?pg_ref=${encodeURIComponent(pgRef)}`;
+  showToast("Downloading callback report...", "success");
+}
+
+function clearSearch() {
+  document.getElementById("pgRefInput").value = "";
+  currentPage = 1;
+  currentFilter = "all";
+  
+  // Reset filter buttons
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.background = "transparent";
+    b.style.color = "var(--text)";
+  });
+  document.querySelector('.filter-btn[data-status="all"]').classList.add("active");
+  document.querySelector('.filter-btn[data-status="all"]').style.background = "var(--accent)";
+  document.querySelector('.filter-btn[data-status="all"]').style.color = "var(--accent-ink)";
+  
+  loadCallbackDetails();
+}
+
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+  
+  toastMessage.textContent = message;
+  
+  if (type === "success") {
+    toast.style.background = "linear-gradient(135deg, var(--accent), #9bc963)";
+  } else {
+    toast.style.background = "linear-gradient(135deg, #E74C3C, #C0392B)";
+  }
+  
+  toast.style.display = "block";
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 3000);
+}
+</script>
+
+<style>
+/* Filter button hover effects */
+.filter-btn {
+  cursor: pointer;
+  border: 1px solid var(--stroke);
+}
+
+.filter-btn:hover:not(.active) {
+  background: var(--page) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Table hover effect */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+/* Button hover effects */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Form control focus */
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Toast animation */
+#toast {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Pagination button states */
+#prevPage:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .card-body {
+    padding: 16px !important;
+  }
+  
+  .row.g-3 {
+    flex-direction: column;
+  }
+  
+  .d-flex.gap-2.justify-content-end {
+    flex-direction: column;
+  }
+  
+  .d-flex.gap-2.justify-content-end .btn {
+    width: 100%;
+  }
+}
+</style>

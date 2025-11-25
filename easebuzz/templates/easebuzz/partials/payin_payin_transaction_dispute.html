@@ -1,0 +1,554 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Dispute Transactions</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage and track all disputed payin transactions</p>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 24px;">
+      
+      <!-- Search and Actions Section -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="position-relative">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            <input type="text" id="searchDispute" class="form-control" placeholder="Search by PG Ref, Merchant Ref, Business Name..." 
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 40px; background: var(--page);">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex gap-2 justify-content-end">
+            <button id="downloadBtn" class="btn" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+              <i class="bi bi-download"></i> Export CSV
+            </button>
+            <button id="refreshBtn" class="btn" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px;">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="status-filter-btn active" data-status="pending" style="border: 1px solid var(--stroke); background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-hourglass-split"></i> Pending
+        </button>
+        <button class="status-filter-btn" data-status="completed" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-check-circle-fill"></i> Completed
+        </button>
+        <button class="status-filter-btn" data-status="all" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-list-ul"></i> All
+        </button>
+      </div>
+
+      <!-- Quick PG Status Filters -->
+      <div class="d-flex gap-2 mb-4 flex-wrap">
+        <span style="color: var(--muted); font-size: 0.875rem; font-weight: 500; margin-right: 8px; line-height: 32px;">PG Status:</span>
+        <button class="pg-filter-btn active" data-pg-status="all" style="border: 1px solid var(--stroke); background: var(--page); color: var(--text); border-radius: 6px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;">
+          All
+        </button>
+        <button class="pg-filter-btn" data-pg-status="Success" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 6px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-check-circle-fill text-success"></i> Success
+        </button>
+        <button class="pg-filter-btn" data-pg-status="Failed" style="border: 1px solid var(--stroke); background: transparent; color: var(--text); border-radius: 6px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;">
+          <i class="bi bi-x-circle-fill text-danger"></i> Failed
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="table align-middle" style="border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr style="background: var(--page); border-radius: 10px;">
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-calendar"></i> Created
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">PG Status</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-exclamation-triangle"></i> Dispute Status
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">PG Ref</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Merchant Ref</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Method</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Currency</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-building"></i> Business
+                </div>
+              </th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Request Amt</th>
+              <th style="border: none; padding: 16px; color: var(--muted); font-weight: 600; font-size: 0.875rem;">Captured Amt</th>
+            </tr>
+          </thead>
+          <tbody id="disputeBody">
+            <tr>
+              <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+                <div class="spinner-border" style="color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching dispute data...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State (Hidden by default) -->
+      <div id="emptyState" class="text-center py-5" style="display: none;">
+        <div class="mb-3" style="font-size: 64px; color: var(--muted); opacity: 0.3;">
+          <i class="bi bi-exclamation-octagon"></i>
+        </div>
+        <h5 class="fw-semibold mb-2" style="color: var(--text);">No Disputes Found</h5>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">There are no dispute transactions matching your criteria.</p>
+        <button onclick="clearFilters()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+          <i class="bi bi-arrow-clockwise"></i> Clear Filters
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--stroke);" id="paginationSection">
+        <div style="color: var(--muted); font-size: 0.875rem;">
+          Showing page <span class="fw-semibold" style="color: var(--text);" id="currentPage">1</span> of <span class="fw-semibold" style="color: var(--text);" id="totalPages">1</span>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="prevPage" class="btn btn-sm" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button id="nextPage" class="btn btn-sm" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; border-radius: 12px; box-shadow: var(--shadow);">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage" style="color: white; font-weight: 500;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let disputeType = "pending";
+let pgStatusFilter = "all";
+let allDisputes = [];
+let searchTimeout;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Load initial data
+  loadDisputes();
+
+  // Event Listeners
+  document.getElementById("searchDispute").addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      loadDisputes();
+    }, 500); // Debounce search
+  });
+
+  document.getElementById("downloadBtn").addEventListener("click", downloadReport);
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    currentPage = 1;
+    loadDisputes();
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadDisputes();
+    }
+  });
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadDisputes();
+    }
+  });
+
+  // Status Filter buttons
+  document.querySelectorAll(".status-filter-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".status-filter-btn").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "transparent";
+        b.style.color = "var(--text)";
+      });
+      
+      this.classList.add("active");
+      this.style.background = "var(--accent)";
+      this.style.color = "var(--accent-ink)";
+      
+      disputeType = this.getAttribute("data-status");
+      currentPage = 1;
+      loadDisputes();
+    });
+  });
+
+  // PG Status Filter buttons
+  document.querySelectorAll(".pg-filter-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".pg-filter-btn").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "transparent";
+      });
+      
+      this.classList.add("active");
+      this.style.background = "var(--page)";
+      
+      pgStatusFilter = this.getAttribute("data-pg-status");
+      filterDisputes();
+    });
+  });
+});
+
+async function loadDisputes() {
+  const tbody = document.getElementById("disputeBody");
+  const emptyState = document.getElementById("emptyState");
+  const paginationSection = document.getElementById("paginationSection");
+  const search = document.getElementById("searchDispute").value.trim();
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+        <div class="spinner-border" style="color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">Fetching dispute data...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const url = `/api/easebuzz/payin_dispute_transactions/?page=${currentPage}&search=${encodeURIComponent(search)}&status=${disputeType}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const records = data.records || [];
+    totalPages = data.total_pages || 1;
+    
+    document.getElementById("currentPage").textContent = currentPage;
+    document.getElementById("totalPages").textContent = totalPages;
+
+    if (records.length === 0) {
+      tbody.style.display = "none";
+      emptyState.style.display = "block";
+      paginationSection.style.display = "none";
+      return;
+    }
+
+    allDisputes = records;
+    filterDisputes();
+    paginationSection.style.display = "flex";
+
+    // Update pagination button states
+    updatePaginationButtons();
+
+  } catch (err) {
+    console.error("Error loading disputes:", err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="border: none; padding: 60px 20px; text-align: center;">
+          <div style="font-size: 48px; color: #E74C3C; opacity: 0.5; margin-bottom: 16px;">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h6 class="fw-semibold mb-2" style="color: var(--text);">Failed to Load Data</h6>
+          <p class="text-muted mb-3" style="font-size: 0.9rem;">Unable to fetch dispute data. Please try again.</p>
+          <button onclick="loadDisputes()" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 8px 20px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function filterDisputes() {
+  let filtered = allDisputes;
+  
+  if (pgStatusFilter !== "all") {
+    filtered = filtered.filter(r => r.pg_status === pgStatusFilter);
+  }
+  
+  renderDisputes(filtered);
+}
+
+function renderDisputes(disputes) {
+  const tbody = document.getElementById("disputeBody");
+  const emptyState = document.getElementById("emptyState");
+
+  if (disputes.length === 0) {
+    tbody.style.display = "none";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+  tbody.innerHTML = "";
+
+  disputes.forEach((r) => {
+    const row = document.createElement("tr");
+    row.style.borderBottom = "1px solid var(--stroke)";
+    row.style.transition = "background 0.2s ease";
+    row.onmouseenter = () => row.style.background = "var(--page)";
+    row.onmouseleave = () => row.style.background = "transparent";
+
+    // PG Status badge
+    let pgStatusBadge = "";
+    if (r.pg_status === "Success") {
+      pgStatusBadge = `<span class="badge rounded-pill" style="background: #D4EDDA; color: #155724; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> Success</span>`;
+    } else if (r.pg_status === "Failed") {
+      pgStatusBadge = `<span class="badge rounded-pill" style="background: #F8D7DA; color: #721C24; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-x-circle-fill me-1"></i> Failed</span>`;
+    } else {
+      pgStatusBadge = `<span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.pg_status || "-"}</span>`;
+    }
+
+    // Dispute Status badge
+    let disputeStatusBadge = "";
+    if (r.dispute_status === "Completed") {
+      disputeStatusBadge = `<span class="badge rounded-pill" style="background: #D4EDDA; color: #155724; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> Completed</span>`;
+    } else if (r.dispute_status === "Pending") {
+      disputeStatusBadge = `<span class="badge rounded-pill" style="background: #FFF3CD; color: #856404; padding: 6px 12px; font-weight: 600; font-size: 0.8rem;"><i class="bi bi-hourglass-split me-1"></i> Pending</span>`;
+    } else {
+      disputeStatusBadge = `<span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.dispute_status || "-"}</span>`;
+    }
+
+    row.innerHTML = `
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-calendar3" style="color: var(--muted); font-size: 0.875rem;"></i>
+          <span style="color: var(--text); font-size: 0.875rem;">${r.created_at || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        ${pgStatusBadge}
+      </td>
+      <td style="border: none; padding: 16px;">
+        ${disputeStatusBadge}
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--page); border-radius: 6px;">
+            <i class="bi bi-hash" style="color: var(--accent); font-size: 0.875rem;"></i>
+          </div>
+          <span style="color: var(--text); font-size: 0.875rem; font-family: monospace;">${r.pg_ref || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span style="color: var(--text); font-size: 0.875rem; font-family: monospace;">${r.merchant_ref || "-"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="badge rounded-pill" style="background: var(--page); color: var(--accent); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.method || "-"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="badge rounded-pill" style="background: var(--page); color: var(--text); padding: 6px 12px; font-weight: 600; font-size: 0.8rem;">${r.currency || "INR"}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--page); border-radius: 6px;">
+            <i class="bi bi-building" style="color: var(--accent); font-size: 0.875rem;"></i>
+          </div>
+          <span style="color: var(--text); font-size: 0.875rem; font-weight: 500;">${r.business_name || "-"}</span>
+        </div>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="fw-bold" style="color: var(--text); font-size: 0.9rem;">₹${parseFloat(r.request_amount || 0).toFixed(2)}</span>
+      </td>
+      <td style="border: none; padding: 16px;">
+        <span class="fw-bold" style="color: var(--accent); font-size: 0.9rem;">₹${parseFloat(r.captured_amount || 0).toFixed(2)}</span>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function updatePaginationButtons() {
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+
+  if (currentPage <= 1) {
+    prevBtn.disabled = true;
+    prevBtn.style.opacity = "0.5";
+    prevBtn.style.cursor = "not-allowed";
+  } else {
+    prevBtn.disabled = false;
+    prevBtn.style.opacity = "1";
+    prevBtn.style.cursor = "pointer";
+  }
+
+  if (currentPage >= totalPages) {
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = "0.5";
+    nextBtn.style.cursor = "not-allowed";
+  } else {
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = "1";
+    nextBtn.style.cursor = "pointer";
+  }
+}
+
+function downloadReport() {
+  const search = document.getElementById("searchDispute").value.trim();
+  const url = `/api/easebuzz/payin_dispute_transactions/?export=csv&status=${disputeType}&search=${encodeURIComponent(search)}`;
+  window.open(url, "_blank");
+  showToast("Downloading dispute report...", "success");
+}
+
+function clearFilters() {
+  document.getElementById("searchDispute").value = "";
+  currentPage = 1;
+  disputeType = "pending";
+  pgStatusFilter = "all";
+  
+  // Reset status filter buttons
+  document.querySelectorAll(".status-filter-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.background = "transparent";
+    b.style.color = "var(--text)";
+  });
+  document.querySelector('.status-filter-btn[data-status="pending"]').classList.add("active");
+  document.querySelector('.status-filter-btn[data-status="pending"]').style.background = "var(--accent)";
+  document.querySelector('.status-filter-btn[data-status="pending"]').style.color = "var(--accent-ink)";
+  
+  // Reset PG status filter buttons
+  document.querySelectorAll(".pg-filter-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.background = "transparent";
+  });
+  document.querySelector('.pg-filter-btn[data-pg-status="all"]').classList.add("active");
+  document.querySelector('.pg-filter-btn[data-pg-status="all"]').style.background = "var(--page)";
+  
+  loadDisputes();
+}
+
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+  
+  toastMessage.textContent = message;
+  
+  if (type === "success") {
+    toast.style.background = "linear-gradient(135deg, var(--accent), #9bc963)";
+  } else {
+    toast.style.background = "linear-gradient(135deg, #E74C3C, #C0392B)";
+  }
+  
+  toast.style.display = "block";
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 3000);
+}
+</script>
+
+<style>
+/* Filter button hover effects */
+.status-filter-btn,
+.pg-filter-btn {
+  cursor: pointer;
+}
+
+.status-filter-btn:hover:not(.active) {
+  background: var(--page) !important;
+  border-color: var(--accent) !important;
+}
+
+.pg-filter-btn:hover:not(.active) {
+  background: var(--page) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Table hover effect */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+/* Button hover effects */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Form control focus */
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Toast animation */
+#toast {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Pagination button states */
+#prevPage:disabled,
+#nextPage:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .card-body {
+    padding: 16px !important;
+  }
+  
+  .row.g-3 {
+    flex-direction: column;
+  }
+  
+  .d-flex.gap-2.justify-content-end {
+    flex-direction: column;
+  }
+  
+  .d-flex.gap-2.justify-content-end .btn {
+    width: 100%;
+  }
+  
+  .status-filter-btn,
+  .pg-filter-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+  }
+}
+</style>

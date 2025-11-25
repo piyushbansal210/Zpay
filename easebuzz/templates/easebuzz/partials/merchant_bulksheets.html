@@ -1,0 +1,517 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        All Bulk Sheets
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">View and manage all bulk upload sheets</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <div class="btn-group" role="group">
+        <button type="button" id="adminBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px 0 0 10px; padding: 10px 20px; font-weight: 600;">
+          <i class="bi bi-shield-fill-check"></i> Admin
+        </button>
+        <button type="button" id="merchantBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 0 10px 10px 0; padding: 10px 20px; font-weight: 600;">
+          <i class="bi bi-shop"></i> Merchant
+        </button>
+      </div>
+      <button id="refreshBtn" class="btn" style="background: transparent; border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px;">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="position-relative">
+        <input 
+          type="text" 
+          id="searchBox" 
+          class="form-control ps-5" 
+          placeholder="Search by user ID or date..."
+          style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+        <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Sheets Table (Always Visible) -->
+  <div id="bulkSheetsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Created At</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">User ID</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Processed On</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bulkSheetsTableBody">
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div style="color: var(--muted);">
+                  <i class="bi bi-file-earmark-spreadsheet" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Bulk Sheets</p>
+                  <p class="mb-0" style="font-size: 0.875rem;">No bulk sheets found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> sheets
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList">
+        <!-- Pagination will be generated here -->
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let bulkSheetsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let currentRole = 'admin';
+const API_TIMEOUT = 5000;
+
+function initBulkSheetsPage() {
+  console.log('Initializing Bulk Sheets Page...');
+  setupEventListeners();
+  loadBulkSheets();
+}
+
+function setupEventListeners() {
+  // Search input with debounce
+  let searchTimeout;
+  const searchInput = document.getElementById('searchBox');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterSheets();
+      }, 300);
+    });
+  }
+
+  // Role toggle buttons
+  const adminBtn = document.getElementById('adminBtn');
+  const merchantBtn = document.getElementById('merchantBtn');
+  
+  if (adminBtn) {
+    adminBtn.addEventListener('click', () => toggleRole('admin'));
+  }
+  
+  if (merchantBtn) {
+    merchantBtn.addEventListener('click', () => toggleRole('merchant'));
+  }
+
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadBulkSheets);
+  }
+}
+
+function toggleRole(role) {
+  currentRole = role;
+  
+  const adminBtn = document.getElementById('adminBtn');
+  const merchantBtn = document.getElementById('merchantBtn');
+  
+  if (role === 'admin') {
+    // Admin active
+    adminBtn.style.background = 'var(--accent)';
+    adminBtn.style.color = 'var(--accent-ink)';
+    adminBtn.style.border = 'none';
+    
+    // Merchant inactive
+    merchantBtn.style.background = 'var(--page)';
+    merchantBtn.style.color = 'var(--text)';
+    merchantBtn.style.border = '1px solid var(--stroke)';
+  } else {
+    // Merchant active
+    merchantBtn.style.background = 'var(--accent)';
+    merchantBtn.style.color = 'var(--accent-ink)';
+    merchantBtn.style.border = 'none';
+    
+    // Admin inactive
+    adminBtn.style.background = 'var(--page)';
+    adminBtn.style.color = 'var(--text)';
+    adminBtn.style.border = '1px solid var(--stroke)';
+  }
+  
+  loadBulkSheets();
+}
+
+async function loadBulkSheets() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch(`/easebuzz/all_bulk_sheets/?role=${currentRole}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.success === false) {
+      throw new Error(data.message || 'Failed to load bulk sheets');
+    }
+
+    bulkSheetsData = data.sheets || data.data || data.results || [];
+    
+    if (!Array.isArray(bulkSheetsData)) {
+      bulkSheetsData = [];
+    }
+
+    filteredData = [...bulkSheetsData];
+    
+    if (bulkSheetsData.length === 0) {
+      renderEmptyTable();
+    } else {
+      renderTable();
+    }
+
+  } catch (error) {
+    console.error('Error loading bulk sheets:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - No bulk sheets found');
+    } else {
+      renderEmptyTable('Unable to load bulk sheets. ' + error.message);
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('bulkSheetsTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No bulk sheets match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((sheet, index) => {
+    const createdAt = sheet.created_at || sheet.created || 'N/A';
+    const userId = sheet.user_id || sheet.userId || sheet.merchant_id || 'N/A';
+    const processedOn = sheet.processed_on || sheet.processed_at || sheet.completed_at || 'Not processed';
+    const sheetUrl = sheet.sheet_url || sheet.url || sheet.file_url || '#';
+    const sheetStatus = sheet.status || sheet.processing_status || 'pending';
+    
+    let statusBadge = '';
+    if (sheetStatus.toLowerCase() === 'completed' || sheetStatus.toLowerCase() === 'success') {
+      statusBadge = '<span class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>';
+    } else if (sheetStatus.toLowerCase() === 'processing') {
+      statusBadge = '<span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-arrow-repeat me-1"></i>Processing</span>';
+    } else if (sheetStatus.toLowerCase() === 'failed' || sheetStatus.toLowerCase() === 'error') {
+      statusBadge = '<span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-x-circle-fill me-1"></i>Failed</span>';
+    } else {
+      statusBadge = '<span class="badge" style="background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-clock-fill me-1"></i>Pending</span>';
+    }
+    
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-calendar3 me-2" style="color: var(--muted);"></i>${formatDateTime(createdAt)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${userId}
+        </td>
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          <i class="bi bi-check2-circle me-2"></i>${processedOn === 'Not processed' ? processedOn : formatDateTime(processedOn)}
+        </td>
+        <td style="padding: 16px 20px;">
+          ${statusBadge}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <a href="${sheetUrl}" target="_blank" class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;" title="View Sheet">
+            <i class="bi bi-file-earmark-spreadsheet"></i> View Sheet
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No bulk sheets found') {
+  const tbody = document.getElementById('bulkSheetsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-file-earmark-spreadsheet" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Bulk Sheets</p>
+          <p class="mb-3" style="font-size: 0.875rem;">${message}</p>
+          <button class="btn btn-sm" onclick="loadBulkSheets()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+  
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+  
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+  
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = '';
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function filterSheets() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  filteredData = bulkSheetsData.filter(sheet => {
+    const userId = (sheet.user_id || sheet.userId || sheet.merchant_id || '').toLowerCase();
+    const createdAt = (sheet.created_at || sheet.created || '').toLowerCase();
+    const status = (sheet.status || sheet.processing_status || '').toLowerCase();
+    
+    return userId.includes(searchTerm) || createdAt.includes(searchTerm) || status.includes(searchTerm);
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function formatDateTime(dateString) {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ✅ Handle direct page loads
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('bulkSheetsTable')) {
+    initBulkSheetsPage();
+  }
+});
+
+// ✅ Handle HTMX navigation
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#bulkSheetsTable')) {
+    setTimeout(initBulkSheetsPage, 50);
+  }
+});
+
+// ✅ Handle HTMX before swap
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+/* Form controls focus */
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+/* Button hover effects */
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Button group styling */
+.btn-group .btn {
+  margin: 0 !important;
+}
+
+.btn-group .btn:first-child {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.btn-group .btn:last-child {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+/* Pagination active state */
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+
+/* Ensure all corners are rounded */
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+</style>

@@ -1,0 +1,156 @@
+{% load static %}
+
+<div class="page">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        <i class="bi bi-bank" style="color: var(--accent);"></i> Add MID
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Add MIDs for Master Bank</p>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card border-0 rounded-4"
+       style="background: var(--bg); border:1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+
+    <div class="card-body px-0">
+
+      <!-- Table -->
+      <div class="table-responsive" style="max-height:600px; overflow-y:auto;">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          
+          <thead style="background: var(--page); border-bottom:2px solid var(--stroke); position:sticky; top:0; z-index:10;">
+            <tr>
+              <th style="padding:16px; font-weight:600;">Bank No.</th>
+              <th style="padding:16px; font-weight:600;">Bank Name</th>
+              <th style="padding:16px; font-weight:600;">Currency</th>
+              <th style="padding:16px; font-weight:600;" class="text-end">Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="midRows">
+            <tr>
+              <td colspan="4" class="text-center py-5">
+                <div class="spinner-border" style="color:var(--accent); width:2rem; height:2rem;"></div>
+                <p class="mt-3 mb-0 text-muted">Loading banks...</p>
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  loadMidList();
+
+});
+
+async function loadMidList() {
+
+  const tbody = document.getElementById("midRows");
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center py-5">
+        <div class="spinner-border" style="color:var(--accent); width:2rem; height:2rem;"></div>
+        <p class="mt-3 mb-0 text-muted">Fetching Master Bank list...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const res = await fetch("/api/jiopay/payin/master/add-mid/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({})
+    });
+
+    const data = await res.json();
+
+    tbody.innerHTML = "";
+
+    if (!data.list || data.list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center py-5">
+            <i class="bi bi-bank" style="font-size:3rem; opacity:0.3;"></i>
+            <p class="mt-3 fw-semibold" style="color:var(--text);">No Data Found</p>
+            <p class="text-muted" style="font-size:0.9rem;">No banks available to add MIDs.</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    data.list.forEach(r => {
+
+      tbody.innerHTML += `
+        <tr style="border-bottom:1px solid var(--stroke);">
+          <td style="padding:16px;">${r.bank_no}</td>
+          <td style="padding:16px; font-weight:600; color:var(--text);">
+            <i class="bi bi-building me-2" style="color:var(--accent);"></i>${r.bank_name}
+          </td>
+          <td style="padding:16px;">${r.currency}</td>
+
+          <td class="text-end" style="padding:16px;">
+            <button class="btn"
+              onclick="openAddMidModal('${r.bank_no}', '${r.bank_name}')"
+              style="background: var(--accent); border:none; color:white; font-weight:600;
+                     padding:8px 18px; border-radius:10px;">
+              Add Account
+            </button>
+          </td>
+        </tr>
+      `;
+
+    });
+
+  } catch (err) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center py-5 text-danger">
+          <i class="bi bi-exclamation-octagon" style="font-size:3rem; opacity:0.6;"></i>
+          <p class="mt-3 fw-semibold" style="color:#b91c1c;">Error Loading Data</p>
+          <p class="text-muted">Unable to load MID list. Please try again.</p>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function openAddMidModal(bankNo, bankName) {
+  alert("Open modal to add MID for Bank: " + bankName + " (No: " + bankNo + ")");
+}
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+
+.form-control {
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.spinner-border {
+  border-width: 3px;
+}
+
+</style>

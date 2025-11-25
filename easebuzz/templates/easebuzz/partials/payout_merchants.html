@@ -1,0 +1,433 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+       Payout Merchants
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage merchant wallet balances and transfers</p>
+    </div>
+    <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <select class="form-select" style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--bg);">
+            <option>INR</option>
+            <option>USD</option>
+            <option>EUR</option>
+          </select>
+        </div>
+        <div class="col-md-9">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="form-control ps-5" 
+              placeholder="Search by business name, email, or mobile number..."
+              style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+            <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merchants Table -->
+  <div id="merchantsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Business Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Mobile No</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Email</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">INR Balance</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Hold Balance</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Prepaid Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Transfer</th>
+            </tr>
+          </thead>
+          <tbody id="merchantTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div style="color: var(--muted);">
+                  <i class="bi bi-wallet2" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p class="mt-3 mb-0">No payout merchants found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> merchants
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let merchantsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+const API_TIMEOUT = 5000;
+
+function initPayoutMerchantsPage() {
+  setupEventListeners();
+  loadPayoutMerchants();
+}
+
+function setupEventListeners() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadPayoutMerchants);
+  }
+
+  let searchTimeout;
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterMerchants(e.target.value);
+      }, 300);
+    });
+  }
+}
+
+async function loadPayoutMerchants() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch('/api/easebuzz/payout_merchants/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.status === 0 || data.success === false) {
+      throw new Error(data.message || 'Failed to load merchants');
+    }
+
+    merchantsData = data.merchants || data.data || data.results || [];
+    
+    if (!Array.isArray(merchantsData)) {
+      merchantsData = [];
+    }
+
+    filteredData = [...merchantsData];
+    
+    if (merchantsData.length === 0) {
+      renderEmptyTable();
+    } else {
+      renderTable();
+    }
+
+  } catch (error) {
+    console.error('Error loading merchants:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - No merchants found');
+    } else {
+      renderEmptyTable('Unable to load merchants. ' + error.message);
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('merchantTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No merchants match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map(merchant => {
+    const businessName = merchant.business_name || 'N/A';
+    const mobile = merchant.mobile_no || 'N/A';
+    const email = merchant.email || 'N/A';
+    const inrBalance = Number(merchant.inr_balance || 0);
+    const holdBalance = Number(merchant.hold_balance || 0);
+    const prepaidStatus = merchant.prepaid_status || 'Inactive';
+    
+    const statusBadge = prepaidStatus.toLowerCase() === 'active' 
+      ? '<span class="badge" style="background: var(--page); color: var(--accent); border: 1px solid var(--stroke); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-check-circle-fill me-1"></i>Active</span>'
+      : '<span class="badge" style="background: var(--page); color: var(--muted); border: 1px solid var(--stroke); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;">Inactive</span>';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; text-align: center;">
+          <i class="bi bi-lock-fill" style="font-size: 1.2rem; color: var(--accent);"></i>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          ${businessName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace;">
+          ${mobile}
+        </td>
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          ${email}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          ₹${inrBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          ₹${holdBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          ${statusBadge}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <button class="btn btn-sm" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 12px; display: flex; align-items: center;">
+              <i class="bi bi-currency-rupee"></i>
+            </button>
+            <i class="bi bi-chevron-right" style="color: var(--muted);"></i>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No payout merchants found') {
+  const tbody = document.getElementById('merchantTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-wallet2" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Merchants Found</p>
+          <p class="mb-3" style="font-size: 0.875rem;">${message}</p>
+          <button class="btn btn-sm" onclick="loadPayoutMerchants()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+  
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+  
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+  
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = '';
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function filterMerchants(searchTerm) {
+  const term = searchTerm.toLowerCase().trim();
+
+  filteredData = merchantsData.filter(merchant => {
+    const businessName = (merchant.business_name || '').toLowerCase();
+    const mobile = (merchant.mobile_no || '').toLowerCase();
+    const email = (merchant.email || '').toLowerCase();
+    
+    return businessName.includes(term) || mobile.includes(term) || email.includes(term);
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('merchantsTable')) {
+    initPayoutMerchantsPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#merchantsTable')) {
+    setTimeout(initPayoutMerchantsPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+</style>

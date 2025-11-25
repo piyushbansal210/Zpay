@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Unmatched Transactions</title>
+
+  <!-- Bootstrap + Icons (Virtual screen also uses this) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    /* ============================================
+   THEME VARIABLES (MATCHING VIRTUAL UI)
+   ============================================ */
+:root {
+  --page: #f8faf5;
+  --bg: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --accent: #84c340;
+  --accent-ink: #ffffff;
+
+  --stroke: #e5e7eb;
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   GLOBAL RESETS
+   ============================================ */
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.page {
+  padding: 32px;
+}
+
+/* ============================================
+   TABLE HOVER & CELL STYLING
+   ============================================ */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+.table td,
+.table th {
+  border: none !important;
+}
+
+/* ============================================
+   ICON BADGES (square icons in rows)
+   ============================================ */
+.icon-badge {
+  width: 28px;
+  height: 28px;
+  background: var(--page);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+/* ============================================
+   BUTTON HOVER EFFECTS
+   ============================================ */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   FORM CONTROL FOCUS
+   ============================================ */
+.form-control:focus,
+.form-select:focus,
+input[type="date"]:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.15) !important;
+}
+
+/* ============================================
+   PAGINATION DISABLED STATES
+   ============================================ */
+#prevPage:disabled,
+#nextPage:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* ============================================
+   TOAST ANIMATION
+   ============================================ */
+#toast {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   RESPONSIVE TABLE + CARD FIXES
+   ============================================ */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px !important;
+  }
+
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .row.g-3 {
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+
+<body style="background: var(--page);">
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">Unmatched Transactions</h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Resolve payout discrepancies efficiently</p>
+    </div>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="card border-0 rounded-4"
+       style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+
+    <div class="card-body" style="padding: 24px;">
+
+      <!-- FILTER BAR -->
+      <div class="row g-3 mb-4">
+
+        <div class="col-md-2">
+          <label class="form-label fw-medium"
+                 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">From Date</label>
+          <input type="date" id="fromDate" class="form-control"
+                 style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--page);">
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-medium"
+                 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">To Date</label>
+          <input type="date" id="toDate" class="form-control"
+                 style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--page);">
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-medium"
+                 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">Mismatch Reason</label>
+          <select id="reasonFilter" class="form-select"
+                  style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; background: var(--page);">
+            <option value="">All Reasons</option>
+            <option value="amount_mismatch">Amount Mismatch</option>
+            <option value="missing_utr">Missing UTR</option>
+            <option value="duplicate_entry">Duplicate Entry</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium"
+                 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">Search</label>
+          <div class="position-relative">
+            <i class="bi bi-search position-absolute"
+               style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            <input type="text" id="searchUnmatched" class="form-control"
+                   placeholder="PG Ref, Merchant Ref, UTR..."
+                   style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 40px; background: var(--page);">
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium"
+                 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 6px;">&nbsp;</label>
+          <div class="d-flex gap-2">
+            <button id="applyFilters" class="btn"
+                    style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px;
+                           padding: 10px 20px; font-weight: 600; flex: 1;">
+              <i class="bi bi-funnel-fill"></i> Apply
+            </button>
+
+            <button id="exportBtn" class="btn"
+                    style="background: transparent; border: 1px solid var(--accent); color: var(--accent);
+                           border-radius: 10px; padding: 10px 20px; font-weight: 600; flex: 1;">
+              <i class="bi bi-download"></i> Export
+            </button>
+
+            <button id="refreshBtn" class="btn"
+                    style="background: transparent; border: 1px solid var(--stroke); color: var(--text);
+                           border-radius: 10px; padding: 10px 20px;">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-responsive">
+        <table class="table align-middle" style="border-collapse: separate; border-spacing: 0;">
+
+          <thead>
+          <tr style="background: var(--page); border-radius: 10px;">
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              <i class="bi bi-calendar"></i> Date
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              PG Ref
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Merchant Ref
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Business
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              UTR
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Bank
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Amount
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Currency
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Mismatch Reason
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Settlement Date
+            </th>
+
+            <th style="padding:16px; color:var(--muted); font-weight:600; font-size:0.875rem;">
+              Status
+            </th>
+          </tr>
+          </thead>
+
+          <tbody id="unmatchedBody">
+          <tr>
+            <td colspan="11" style="padding: 60px 20px; text-align: center;">
+              <div class="spinner-border" style="color: var(--accent);" role="status"></div>
+              <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">
+                Fetching unmatched transactions...
+              </p>
+            </td>
+          </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div id="emptyState" class="text-center py-5" style="display: none;">
+        <div class="mb-3" style="font-size: 64px; color: var(--muted); opacity: 0.3;">
+          <i class="bi bi-exclamation-circle"></i>
+        </div>
+        <h5 class="fw-semibold mb-2" style="color: var(--text);">No Unmatched Transactions</h5>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">
+          There are no unmatched transactions matching your criteria.
+        </p>
+
+        <button onclick="clearFilters()" class="btn"
+                style="background: var(--accent); border: none; color: var(--accent-ink);
+                       border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+          <i class="bi bi-arrow-clockwise"></i> Clear Filters
+        </button>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3"
+           style="border-top: 1px solid var(--stroke);" id="paginationSection">
+
+        <div style="color: var(--muted); font-size: 0.875rem;">
+          Showing page <span class="fw-semibold" id="currentPage" style="color: var(--text);">1</span>
+          of <span class="fw-semibold" id="totalPages" style="color: var(--text);">1</span>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button id="prevPage" class="btn btn-sm"
+                  style="background: transparent; border: 1px solid var(--stroke); color: var(--text);
+                         border-radius: 8px; width: 36px;">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <button id="nextPage" class="btn btn-sm"
+                  style="background: var(--accent); border: none; color: var(--accent-ink);
+                         border-radius: 8px; width: 36px;">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  <div id="toast" class="toast align-items-center border-0" role="alert"
+       aria-live="assertive" aria-atomic="true"
+       style="display: none; border-radius: 12px; box-shadow: var(--shadow);">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage" style="color: white; font-weight: 500;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+let totalPages = 1;
+let searchTimeout;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Set default date range (last 30 days)
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
+  document.getElementById("toDate").valueAsDate = today;
+  document.getElementById("fromDate").valueAsDate = thirtyDaysAgo;
+
+  // Load initial data
+  loadUnmatched();
+
+  // SEARCH DEBOUNCE
+  document.getElementById("searchUnmatched").addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      loadUnmatched();
+    }, 500);
+  });
+
+  // FILTERS
+  document.getElementById("applyFilters").addEventListener("click", () => {
+    currentPage = 1;
+    loadUnmatched();
+  });
+
+  document.getElementById("reasonFilter").addEventListener("change", () => {
+    currentPage = 1;
+    loadUnmatched();
+  });
+
+  document.getElementById("fromDate").addEventListener("change", () => {
+    currentPage = 1;
+    loadUnmatched();
+  });
+
+  document.getElementById("toDate").addEventListener("change", () => {
+    currentPage = 1;
+    loadUnmatched();
+  });
+
+  // EXPORT
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const search = document.getElementById("searchUnmatched").value.trim();
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    const reason = document.getElementById("reasonFilter").value;
+
+    const url = `/api/easebuzz/payin_unmatched_transactions/?export=csv&search=${encodeURIComponent(
+      search
+    )}&from_date=${fromDate}&to_date=${toDate}&reason=${reason}`;
+
+    window.open(url, "_blank");
+    showToast("Downloading unmatched transactions report...", "success");
+  });
+
+  // REFRESH
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    currentPage = 1;
+    loadUnmatched();
+  });
+
+  // PAGINATION
+  document.getElementById("nextPage").addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadUnmatched();
+    }
+  });
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadUnmatched();
+    }
+  });
+});
+
+// ======================
+//  LOAD UNMATCHED DATA
+// ======================
+async function loadUnmatched() {
+  const tbody = document.getElementById("unmatchedBody");
+  const emptyState = document.getElementById("emptyState");
+  const paginationSection = document.getElementById("paginationSection");
+
+  const search = document.getElementById("searchUnmatched").value.trim();
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+  const reason = document.getElementById("reasonFilter").value;
+
+  tbody.style.display = "table-row-group";
+  emptyState.style.display = "none";
+
+  // LOADING UI
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="11" style="padding: 60px 20px; text-align: center;">
+        <div class="spinner-border" style="color: var(--accent);" role="status"></div>
+        <p class="mt-3 mb-0" style="color: var(--muted); font-size: 0.9rem;">
+          Fetching unmatched transactions...
+        </p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const url = `/api/easebuzz/payin_unmatched_transactions/?page=${currentPage}&search=${encodeURIComponent(
+      search
+    )}&from_date=${fromDate}&to_date=${toDate}&reason=${reason}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const records = data.records || [];
+    totalPages = data.total_pages || 1;
+
+    document.getElementById("currentPage").textContent = currentPage;
+    document.getElementById("totalPages").textContent = totalPages;
+
+    // EMPTY STATE
+    if (records.length === 0) {
+      tbody.style.display = "none";
+      emptyState.style.display = "block";
+      paginationSection.style.display = "none";
+      return;
+    }
+
+    // RENDER ROWS
+    renderUnmatched(records);
+    paginationSection.style.display = "flex";
+    updatePaginationButtons();
+
+  } catch (err) {
+    console.error("Error loading unmatched:", err);
+    showErrorState(tbody);
+  }
+}
+
+// ======================
+//  RENDER ALL ROWS
+// ======================
+function renderUnmatched(rows) {
+  const tbody = document.getElementById("unmatchedBody");
+  tbody.innerHTML = "";
+
+  rows.forEach((r) => {
+    const row = document.createElement("tr");
+
+    row.style.borderBottom = "1px solid var(--stroke)";
+    row.style.transition = "background 0.2s ease";
+
+    row.onmouseenter = () => (row.style.background = "var(--page)");
+    row.onmouseleave = () => (row.style.background = "transparent");
+
+    // Get status badge
+    let statusBadge = getStatusBadge(r.status);
+
+    row.innerHTML = `
+      <td style="padding:16px;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-calendar3" style="color:var(--muted); font-size:0.875rem;"></i>
+          <span style="color:var(--text); font-size:0.875rem;">${r.date || "-"}</span>
+        </div>
+      </td>
+
+      <td style="padding:16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="icon-badge"><i class="bi bi-hash"></i></div>
+          <span style="color:var(--text); font-size:0.875rem; font-family: monospace;">${r.pg_ref || "-"}</span>
+        </div>
+      </td>
+
+      <td style="padding:16px; font-family:monospace; color:var(--text);">
+        ${r.merchant_ref || "-"}
+      </td>
+
+      <td style="padding:16px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="icon-badge"><i class="bi bi-building"></i></div>
+          <span style="color:var(--text); font-size:0.875rem;">${r.business_name || "-"}</span>
+        </div>
+      </td>
+
+      <td style="padding:16px;">
+        <span class="badge bg-light text-dark" style="font-family: monospace; padding:6px 12px;">
+          ${r.utr || "-"}
+        </span>
+      </td>
+
+      <td style="padding:16px;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-bank" style="color:var(--muted);"></i>
+          <span style="color:var(--text); font-size:0.875rem;">${r.bank_name || "-"}</span>
+        </div>
+      </td>
+
+      <td style="padding:16px;">
+        <span class="fw-bold" style="color: var(--accent); font-size:0.9rem;">
+          ₹${parseFloat(r.amount || 0).toFixed(2)}
+        </span>
+      </td>
+
+      <td style="padding:16px;">
+        ${r.currency || "-"}
+      </td>
+
+      <td style="padding:16px;">
+        <span class="text-muted" style="font-size:0.875rem;">
+          ${r.mismatch_reason || "-"}
+        </span>
+      </td>
+
+      <td style="padding:16px;">
+        <i class="bi bi-calendar2-minus" style="color:var(--muted);"></i>
+        <span style="color:var(--text); font-size:0.875rem;">${r.settlement_date || "-"}</span>
+      </td>
+
+      <td style="padding:16px;">
+        ${statusBadge}
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+// ======================
+//  STATUS BADGES
+// ======================
+function getStatusBadge(status) {
+  if (!status) return "-";
+
+  const s = status.toLowerCase();
+
+  if (s === "open") {
+    return `
+      <span class="badge rounded-pill"
+            style="background:#FFF3CD; color:#856404; padding:6px 12px; font-weight:600;">
+        <i class="bi bi-hourglass-split me-1"></i> Open
+      </span>`;
+  }
+
+  if (s === "closed") {
+    return `
+      <span class="badge rounded-pill"
+            style="background:#D4EDDA; color:#155724; padding:6px 12px; font-weight:600;">
+        <i class="bi bi-check-circle-fill me-1"></i> Closed
+      </span>`;
+  }
+
+  if (s === "escalated") {
+    return `
+      <span class="badge rounded-pill"
+            style="background:#F8D7DA; color:#721C24; padding:6px 12px; font-weight:600;">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> Escalated
+      </span>`;
+  }
+
+  return `<span class="badge rounded-pill bg-secondary">${status}</span>`;
+}
+
+// ======================
+//  PAGINATION BUTTON STYLING
+// ======================
+function updatePaginationButtons() {
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+
+  prevBtn.style.opacity = prevBtn.disabled ? "0.5" : "1";
+  nextBtn.style.opacity = nextBtn.disabled ? "0.5" : "1";
+}
+
+// ======================
+//  CLEAR FILTERS
+// ======================
+function clearFilters() {
+  document.getElementById("searchUnmatched").value = "";
+  document.getElementById("reasonFilter").value = "";
+
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
+  document.getElementById("toDate").valueAsDate = today;
+  document.getElementById("fromDate").valueAsDate = thirtyDaysAgo;
+
+  currentPage = 1;
+  loadUnmatched();
+}
+
+// ======================
+//  ERROR STATE
+// ======================
+function showErrorState(tbody) {
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="11" style="padding: 60px 20px; text-align: center;">
+        <div style="font-size: 48px; color: #E74C3C; opacity: 0.5; margin-bottom: 16px;">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h6 class="fw-semibold mb-2" style="color: var(--text);">Failed to Load Data</h6>
+        <p class="text-muted mb-3" style="font-size: 0.9rem;">Unable to fetch unmatched transactions. Please try again.</p>
+        <button onclick="loadUnmatched()" class="btn"
+                style="background: var(--accent); border: none; color: var(--accent-ink);
+                       border-radius: 10px; padding: 8px 20px; font-weight: 600;">
+          <i class="bi bi-arrow-clockwise"></i> Retry
+        </button>
+      </td>
+    </tr>
+  `;
+}
+
+// ======================
+//  TOAST
+// ======================
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+
+  toastMessage.textContent = message;
+
+  if (type === "success") {
+    toast.style.background = "linear-gradient(135deg, var(--accent), #9bc963)";
+  } else {
+    toast.style.background = "linear-gradient(135deg, #E74C3C, #C0392B)";
+  }
+
+  toast.style.display = "block";
+  setTimeout(() => (toast.style.display = "none"), 3000);
+}
+
+</script>
+
+</body>
+</html>

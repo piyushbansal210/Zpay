@@ -1,12 +1,27 @@
-from django.shortcuts import render
+from .utils import render_partial
 
-def index(request):
-    stats = {
-        "total_merchants": 12,
-        "total_payins": 540,
-        "total_payouts": 480,
-        "total_volume": "₹24,50,000"
+def home(request):
+    return render_partial(
+        request,
+        "dashboard/pages/overview.html",       # for full page load
+        "dashboard/partials/overview.html",    # for HTMX partial swap
+        {}
+    )
+
+from .utils import render_partial
+
+def easebuzz_dashboard(request):
+    ctx = {
+        "total_merchants": 120,
+        "total_payins": 45000,
+        "total_payouts": 38000,
+        "total_volume": "₹9,80,40,000",
+        "success_rate": "97.4%",
+        "disputes": 32,
     }
-    providers = ["Razorpay", "PayU", "Stripe"]
-    return render(request, 'dashboard/index.html', {"stats": stats, "providers": providers})
-
+    return render_partial(
+        request,
+        "dashboard/pages/easebuzz_home.html",
+        "dashboard/partials/easebuzz_home.html",
+        ctx
+    )
