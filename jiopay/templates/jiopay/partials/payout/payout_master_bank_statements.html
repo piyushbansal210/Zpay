@@ -1,0 +1,509 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+       Download Bank Statements
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Download and manage bank account statements</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="loadStatements()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="fromDate" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-calendar-event me-2" style="color: var(--accent);"></i>From Date
+          </label>
+          <input 
+            type="date" 
+            id="fromDate" 
+            class="form-control" 
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg); font-size: 0.9rem;">
+        </div>
+        <div class="col-md-3">
+          <label for="toDate" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-calendar-check me-2" style="color: var(--accent);"></i>To Date
+          </label>
+          <input 
+            type="date" 
+            id="toDate" 
+            class="form-control" 
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg); font-size: 0.9rem;">
+        </div>
+        <div class="col-md-3">
+          <label for="bankFilter" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">
+            <i class="bi bi-bank me-2" style="color: var(--accent);"></i>Bank
+          </label>
+          <select 
+            id="bankFilter" 
+            class="form-select" 
+            style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg); font-size: 0.9rem;">
+            <option value="">All Banks</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button id="fetchBtn" class="btn w-100" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 12px 20px; font-weight: 600;">
+            <i class="bi bi-search me-1"></i> Get Statements
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statements Table -->
+  <div id="statementsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Date</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Bank Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Account No.</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">File Type</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">File Size</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="statementsTableBody">
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <div style="color: var(--muted);">
+                  <i class="bi bi-file-earmark-text" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Statements</p>
+                  <p class="mb-0" style="font-size: 0.875rem;">Select a date range and click "Get Statements" to view available statements</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> statements
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+let statementsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+const API_TIMEOUT = 15000;
+
+function initBankStatementsPage() {
+  console.log('Initializing Bank Statements Page...');
+  setupDateInputs();
+  setupEventListeners();
+  loadBankList();
+}
+
+function setupDateInputs() {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  
+  const fromDate = document.getElementById('fromDate');
+  const toDate = document.getElementById('toDate');
+  
+  fromDate.value = todayStr;
+  toDate.value = todayStr;
+  fromDate.max = todayStr;
+  toDate.max = todayStr;
+
+  fromDate.addEventListener('change', function() {
+    if (toDate.value < fromDate.value) {
+      toDate.value = fromDate.value;
+    }
+    toDate.min = fromDate.value;
+  });
+}
+
+function setupEventListeners() {
+  const fetchBtn = document.getElementById('fetchBtn');
+  const bankFilter = document.getElementById('bankFilter');
+
+  if (fetchBtn) {
+    fetchBtn.addEventListener('click', loadStatements);
+  }
+
+  if (bankFilter) {
+    bankFilter.addEventListener('change', filterStatements);
+  }
+}
+
+async function loadBankList() {
+  try {
+    const response = await fetch('/api/payout/banks/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const bankFilter = document.getElementById('bankFilter');
+      
+      if (data.banks && data.banks.length > 0) {
+        data.banks.forEach(bank => {
+          const option = document.createElement('option');
+          option.value = bank.bank_name || bank.name;
+          option.textContent = bank.bank_name || bank.name;
+          bankFilter.appendChild(option);
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error loading bank list:', error);
+  }
+}
+
+async function loadStatements() {
+  if (isLoading) return;
+
+  const fromDate = document.getElementById('fromDate').value;
+  const toDate = document.getElementById('toDate').value;
+
+  if (!fromDate || !toDate) {
+    showToast('Please select both From Date and To Date', 'error');
+    return;
+  }
+
+  if (new Date(fromDate) > new Date(toDate)) {
+    showToast('From Date cannot be after To Date', 'error');
+    return;
+  }
+
+  isLoading = true;
+
+  const fetchBtn = document.getElementById('fetchBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalFetchHtml = fetchBtn.innerHTML;
+  const originalRefreshHtml = refreshBtn.innerHTML;
+  
+  fetchBtn.disabled = true;
+  refreshBtn.disabled = true;
+  fetchBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('statementsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Fetching bank statements...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const url = `/api/payout/bank_statements/?from_date=${fromDate}&to_date=${toDate}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 1 && data.statements && data.statements.length > 0) {
+      statementsData = data.statements;
+      filteredData = [...statementsData];
+      renderTable();
+      showToast('Statements loaded successfully', 'success');
+    } else {
+      statementsData = [];
+      filteredData = [];
+      renderEmptyTable(data.message || 'No statements found for the selected date range');
+    }
+
+  } catch (error) {
+    console.error('Error loading statements:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load statements. ' + error.message);
+      // showToast('Failed to load statements', 'error');
+    }
+  } finally {
+    isLoading = false;
+    fetchBtn.disabled = false;
+    refreshBtn.disabled = false;
+    fetchBtn.innerHTML = originalFetchHtml;
+    refreshBtn.innerHTML = originalRefreshHtml;
+  }
+}
+
+function filterStatements() {
+  const bankFilter = document.getElementById('bankFilter').value.toLowerCase();
+
+  if (!bankFilter) {
+    filteredData = [...statementsData];
+  } else {
+    filteredData = statementsData.filter(stmt => {
+      const bankName = (stmt.bank_name || stmt.bankName || '').toLowerCase();
+      return bankName === bankFilter.toLowerCase();
+    });
+  }
+
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('statementsTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No statements match your filter criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((stmt) => {
+    const date = stmt.date || stmt.created_at || '-';
+    const bankName = stmt.bank_name || stmt.bankName || '-';
+    const accountNo = stmt.account_no || stmt.accountNo || '-';
+    const fileType = stmt.file_type || stmt.fileType || 'CSV';
+    const fileSize = stmt.file_size || stmt.fileSize || 'N/A';
+    const downloadUrl = stmt.download_url || stmt.downloadUrl || '#';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem;">
+          <i class="bi bi-calendar3 me-2"></i>${formatDate(date)}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-bank me-2" style="color: var(--accent);"></i>${bankName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${accountNo}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: var(--page); color: var(--text); border: 1px solid var(--stroke); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            <i class="bi bi-file-earmark-${fileType.toLowerCase() === 'pdf' ? 'pdf' : 'text'} me-1"></i>${fileType.toUpperCase()}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: center; color: var(--muted); font-size: 0.875rem;">
+          ${fileSize !== 'N/A' ? formatFileSize(fileSize) : 'N/A'}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <a href="${downloadUrl}" target="_blank" class="btn btn-sm" 
+            style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No statements found') {
+  const tbody = document.getElementById('statementsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-file-earmark-text" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Statements</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatDate(dateString) {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+function formatFileSize(bytes) {
+  if (typeof bytes === 'string') return bytes;
+  
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  if (bytes === 0) return '0 Bytes';
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('statementsTable')) {
+    initBankStatementsPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#statementsTable')) {
+    setTimeout(initBankStatementsPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+</style>

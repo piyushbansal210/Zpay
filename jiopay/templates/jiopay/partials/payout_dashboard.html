@@ -1,0 +1,652 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+      Payout Dashboard
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Monitor and manage all merchant payout operations</p>
+    </div>
+    <button id="refreshBtn" class="btn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 24px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-shop me-2"></i>Active Merchants
+              </div>
+              <div style="color: var(--text); font-size: 2rem; font-weight: 700;" id="activeMerchants">0</div>
+            </div>
+            <div style="width: 56px; height: 56px; background: var(--page); border-radius: 12px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-people-fill" style="font-size: 1.75rem; color: var(--accent);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+        <div class="card-body" style="padding: 24px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="color: var(--muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-wallet2 me-2"></i>Total Payout Wallet Balance
+              </div>
+              <div style="color: var(--text); font-size: 2rem; font-weight: 700;" id="walletBalance">₹0.00</div>
+            </div>
+            <div style="width: 56px; height: 56px; background: var(--page); border-radius: 12px; display: grid; place-items: center; border: 1px solid var(--stroke);">
+              <i class="bi bi-cash-stack" style="font-size: 1.75rem; color: var(--accent);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="row g-3">
+    <!-- Left Panel -->
+    <div class="col-lg-8">
+      <div class="d-flex flex-column gap-3">
+        
+        <!-- Active Routes -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0" style="color: var(--text);">
+                <i class="bi bi-signpost-2" style="color: var(--accent);"></i> Active Routes
+              </h6>
+              <button class="btn btn-sm" id="refreshRoutesBtn" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+                <i class="bi bi-arrow-repeat"></i> Refresh All Balances
+              </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="position-relative mb-3">
+              <input 
+                type="text" 
+                id="routeSearch" 
+                class="form-control ps-5" 
+                placeholder="Search for route name..."
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px 10px 40px; background: var(--bg); font-size: 0.875rem;">
+              <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            </div>
+
+            <!-- Routes Table -->
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+                  <tr>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">
+                      Route Name <i class="bi bi-arrow-down-up" style="font-size: 0.7rem;"></i>
+                    </th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none; text-align: right;">
+                      Balance <i class="bi bi-arrow-down-up" style="font-size: 0.7rem;"></i>
+                    </th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none; text-align: center;">
+                      Update
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="routesTableBody">
+                  <tr>
+                    <td colspan="3" class="text-center py-4" style="color: var(--muted); font-size: 0.875rem;">
+                      No active routes found
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Payout Requests Chart -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-graph-up" style="color: var(--accent);"></i> Total Payout Requests
+            </h6>
+            <canvas id="totalPayoutChart" height="130"></canvas>
+          </div>
+        </div>
+
+        <!-- Merchant Transactions -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0" style="color: var(--text);">
+                <i class="bi bi-receipt" style="color: var(--accent);"></i> Merchant Transactions
+                <i class="bi bi-check2-circle" style="color: var(--accent);"></i>
+              </h6>
+              <select id="filterSelect" class="form-select form-select-sm" style="width: 130px; border: 1px solid var(--stroke); border-radius: 8px; padding: 6px 12px; background: var(--bg);">
+                <option>Today</option>
+                <option>This Week</option>
+                <option>This Month</option>
+              </select>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+                  <tr>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Date</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none;">Business</th>
+                    <th style="padding: 12px 16px; color: var(--text); font-weight: 600; font-size: 0.8125rem; border: none; text-align: right;">Payout Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="merchantTxnBody">
+                  <tr>
+                    <td colspan="3" class="text-center py-4" style="color: var(--muted); font-size: 0.875rem;">
+                      No transactions found
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="col-lg-4">
+      <div class="d-flex flex-column gap-3">
+
+        <!-- Payout Stats -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0" style="color: var(--text);">
+                <i class="bi bi-bar-chart" style="color: var(--accent);"></i> Payout Stats
+              </h6>
+              <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" style="width: 90px; border: 1px solid var(--stroke); border-radius: 8px; padding: 4px 8px; font-size: 0.75rem;">
+                  <option>Amount</option>
+                  <option>Count</option>
+                </select>
+                <select class="form-select form-select-sm" style="width: 80px; border: 1px solid var(--stroke); border-radius: 8px; padding: 4px 8px; font-size: 0.75rem;">
+                  <option>Today</option>
+                  <option>Week</option>
+                  <option>Month</option>
+                </select>
+                <select class="form-select form-select-sm" style="width: 110px; border: 1px solid var(--stroke); border-radius: 8px; padding: 4px 8px; font-size: 0.75rem;">
+                  <option>All Merchants</option>
+                </select>
+              </div>
+            </div>
+            <canvas id="payoutStatsChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Payout Progress -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <h6 class="fw-semibold mb-3" style="color: var(--text);">
+              <i class="bi bi-pie-chart" style="color: var(--accent);"></i> Payout Progress
+            </h6>
+            <div id="payoutProgress"></div>
+          </div>
+        </div>
+
+        <!-- Bank Balance -->
+        <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+          <div class="card-body" style="padding: 24px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0" style="color: var(--text);">
+                <i class="bi bi-bank" style="color: var(--accent);"></i> Bank Balance
+              </h6>
+              <select class="form-select form-select-sm" style="width: 100px; border: 1px solid var(--stroke); border-radius: 8px; padding: 6px 10px; font-size: 0.8125rem;">
+                <option>ICICI</option>
+                <option>HDFC</option>
+                <option>Axis</option>
+              </select>
+            </div>
+            <h3 id="bankBalance" class="fw-bold mb-3" style="color: var(--text); font-size: 1.75rem;">₹0</h3>
+            <div class="mb-2 d-flex justify-content-between" style="font-size: 0.875rem;">
+              <span style="color: var(--muted);">Used Limit:</span>
+              <span style="color: var(--text); font-weight: 600;" id="usedLimit">₹0</span>
+            </div>
+            <div class="mb-3 d-flex justify-content-between" style="font-size: 0.875rem;">
+              <span style="color: var(--muted);">Available Limit:</span>
+              <span style="color: var(--text); font-weight: 600;" id="remainingLimit">₹0</span>
+            </div>
+            <div class="text-end">
+              <a href="#" style="color: var(--accent); text-decoration: none; font-size: 0.875rem; font-weight: 600;">
+                View Details <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let totalPayoutChart;
+let payoutStatsChart;
+let isLoading = false;
+const API_TIMEOUT = 5000;
+
+function initPayoutDashboard() {
+  setupEventListeners();
+  loadDashboard();
+}
+
+function setupEventListeners() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadDashboard);
+  }
+
+  const refreshRoutesBtn = document.getElementById('refreshRoutesBtn');
+  if (refreshRoutesBtn) {
+    refreshRoutesBtn.addEventListener('click', () => {
+      showToast('Refreshing all route balances...', 'success');
+      loadDashboard();
+    });
+  }
+
+  let searchTimeout;
+  const routeSearch = document.getElementById('routeSearch');
+  if (routeSearch) {
+    routeSearch.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterRoutes(e.target.value);
+      }, 300);
+    });
+  }
+}
+
+async function loadDashboard() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    
+    const response = await fetch('/jiopay/payout_dashboard/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.status === 0 || data.success === false) {
+      throw new Error(data.message || 'Failed to load dashboard data');
+    }
+
+    const dashboardData = data.data || data;
+    
+    document.getElementById('activeMerchants').textContent = dashboardData.active_merchants || 0;
+    document.getElementById('walletBalance').textContent = `₹${Number(dashboardData.wallet_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+
+    renderRoutesTable(dashboardData.routes || []);
+    renderPayoutProgress(dashboardData.summary || {});
+    renderMerchantTransactions(dashboardData.transactions || []);
+
+    document.getElementById('bankBalance').textContent = `₹${Number(dashboardData.bank_balance || 0).toLocaleString('en-IN')}`;
+    document.getElementById('usedLimit').textContent = `₹${Number(dashboardData.used_limit || 0).toLocaleString('en-IN')}`;
+    document.getElementById('remainingLimit').textContent = `₹${Number(dashboardData.available_limit || dashboardData.remaining_limit || 0).toLocaleString('en-IN')}`;
+
+    renderTotalPayoutChart(dashboardData.graph || []);
+    renderPayoutStatsChart(dashboardData.stats || {});
+
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+    if (error.name === 'AbortError') {
+      showToast('Request timeout', 'error');
+    } else {
+      showToast('Failed to load dashboard: ' + error.message, 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderRoutesTable(routes) {
+  const tbody = document.getElementById('routesTableBody');
+  
+  if (routes.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-center py-4" style="color: var(--muted); font-size: 0.875rem;">
+          No active routes found
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = routes.map(route => `
+    <tr style="border-bottom: 1px solid var(--stroke);">
+      <td style="padding: 12px 16px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        <i class="bi bi-signpost-2-fill me-2" style="color: var(--accent);"></i>${route.route_name || route.name || 'N/A'}
+      </td>
+      <td style="padding: 12px 16px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        ₹${Number(route.balance || 0).toLocaleString('en-IN')}
+      </td>
+      <td style="padding: 12px 16px; text-align: center;">
+        <button class="btn btn-sm" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 6px; padding: 4px 12px; font-size: 0.75rem;">
+          <i class="bi bi-arrow-repeat"></i> Update
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderPayoutProgress(summary) {
+  const progress = document.getElementById('payoutProgress');
+  
+  const total = summary.total || 1;
+  
+  const createProgressBar = (label, value, amount) => {
+    const percent = ((value / total) * 100).toFixed(1);
+    return `
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1" style="font-size: 0.8125rem;">
+          <span style="color: var(--text); font-weight: 600;">${label}</span>
+          <span style="color: var(--muted);">${percent}% — ₹${Number(amount || 0).toLocaleString('en-IN')}</span>
+        </div>
+        <div class="progress" style="height: 8px; background: var(--page); border-radius: 6px;">
+          <div class="progress-bar" style="width: ${percent}%; background: var(--accent); border-radius: 6px;"></div>
+        </div>
+      </div>
+    `;
+  };
+
+  progress.innerHTML = `
+    ${createProgressBar('Success', summary.success || 0, summary.success_amount || 0)}
+    ${createProgressBar('Pending', summary.pending || 0, summary.pending_amount || 0)}
+    ${createProgressBar('Initiated', summary.initiated || 0, summary.initiated_amount || 0)}
+    ${createProgressBar('Failed', summary.failed || 0, summary.failed_amount || 0)}
+    ${createProgressBar('Refunded', summary.refunded || 0, summary.refunded_amount || 0)}
+    ${createProgressBar('Total Orders', summary.total || 0, summary.total_amount || 0)}
+  `;
+}
+
+function renderMerchantTransactions(transactions) {
+  const tbody = document.getElementById('merchantTxnBody');
+  
+  if (transactions.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-center py-4" style="color: var(--muted); font-size: 0.875rem;">
+          No transactions found
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = transactions.map(txn => `
+    <tr style="border-bottom: 1px solid var(--stroke);">
+      <td style="padding: 12px 16px; color: var(--muted); font-size: 0.875rem;">
+        <i class="bi bi-calendar3 me-2"></i>${txn.date || 'N/A'}
+      </td>
+      <td style="padding: 12px 16px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        ${txn.business || txn.merchant || 'N/A'}
+      </td>
+      <td style="padding: 12px 16px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+        ₹${Number(txn.amount || 0).toLocaleString('en-IN')}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderTotalPayoutChart(graphData) {
+  const ctx = document.getElementById('totalPayoutChart');
+  if (!ctx) return;
+  
+  const labels = graphData.map(g => g.date || g.label);
+  const values = graphData.map(g => g.amount || g.value || 0);
+
+  if (totalPayoutChart) {
+    totalPayoutChart.destroy();
+  }
+
+  totalPayoutChart = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Total Payout Transactions',
+        data: values,
+        borderColor: '#84c340',
+        backgroundColor: 'rgba(132, 195, 64, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#84c340',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: { 
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#666' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#666' }
+        }
+      },
+      plugins: { 
+        legend: { 
+          display: true,
+          position: 'top',
+          labels: { color: '#333', font: { size: 12 } }
+        }
+      },
+    },
+  });
+}
+
+function renderPayoutStatsChart(stats) {
+  const ctx = document.getElementById('payoutStatsChart');
+  if (!ctx) return;
+
+  const labels = stats.labels || ['2025-09-02'];
+  const successData = stats.success || [0];
+  const initiatedData = stats.initiated || [0];
+  const failedData = stats.failed || [0];
+
+  if (payoutStatsChart) {
+    payoutStatsChart.destroy();
+  }
+
+  payoutStatsChart = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Success',
+          data: successData,
+          backgroundColor: '#84c340',
+          borderRadius: 6,
+        },
+        {
+          label: 'Initiated',
+          data: initiatedData,
+          backgroundColor: '#a0a0a0',
+          borderRadius: 6,
+        },
+        {
+          label: 'Failed',
+          data: failedData,
+          backgroundColor: '#666666',
+          borderRadius: 6,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: { 
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#666' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#666' }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#333', font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function filterRoutes(searchTerm) {
+  const rows = document.querySelectorAll('#routesTableBody tr');
+  const term = searchTerm.toLowerCase();
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(term) ? '' : 'none';
+  });
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('totalPayoutChart')) {
+    initPayoutDashboard();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#totalPayoutChart')) {
+    setTimeout(initPayoutDashboard, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--page);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--stroke);
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.progress-bar {
+  transition: width 0.6s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.rounded-4 {
+  border-radius: 14px !important;
+}
+</style>

@@ -1,0 +1,553 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Edit Product
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage and update product information</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="addProductBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-plus-circle"></i> Add Product
+      </button>
+      <button id="refreshBtn" class="btn" onclick="loadProducts()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card border-0 rounded-4 mb-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 20px;">
+      <div class="position-relative">
+        <input 
+          type="text" 
+          id="searchBox" 
+          class="form-control ps-5" 
+          placeholder="Search by product name or account number..."
+          style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px 12px 42px; background: var(--bg); font-size: 0.9rem;">
+        <i class="bi bi-search position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div id="productsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Product Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Buying Price</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: right;">Selling Price</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Account Number</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Quantity</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Description</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center;">Status</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading products...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+    <div style="color: var(--muted); font-size: 0.875rem;">
+      Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalRecords">0</span> products
+    </div>
+    <nav>
+      <ul class="pagination mb-0" id="paginationList"></ul>
+    </nav>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border: none; border-radius: 14px; box-shadow: var(--shadow);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--stroke); padding: 20px 24px;">
+        <h5 class="modal-title fw-semibold" style="color: var(--text);">
+          <i class="bi bi-pencil-square me-2" style="color: var(--accent);"></i>Edit Product
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form id="editProductForm">
+          <input type="hidden" id="editProductId">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="editProductName" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Product Name <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="editProductName" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-6">
+              <label for="editAccountNumber" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Account Number <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="editAccountNumber" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label for="editBuyingPrice" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Buying Price <span class="text-danger">*</span>
+              </label>
+              <input type="number" class="form-control" id="editBuyingPrice" step="0.01" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label for="editSellingPrice" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Selling Price <span class="text-danger">*</span>
+              </label>
+              <input type="number" class="form-control" id="editSellingPrice" step="0.01" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            </div>
+            <div class="col-md-4">
+              <label for="editQuantity" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Quantity <span class="text-danger">*</span>
+              </label>
+              <input type="number" class="form-control" id="editQuantity" required
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);">
+            </div>
+            <div class="col-12">
+              <label for="editDescription" class="form-label" style="color: var(--text); font-weight: 600; font-size: 0.875rem;">
+                Description
+              </label>
+              <textarea class="form-control" id="editDescription" rows="3"
+                style="border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; background: var(--bg);"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--stroke); padding: 16px 24px;">
+        <button type="button" class="btn" data-bs-dismiss="modal" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 8px 16px;">
+          Cancel
+        </button>
+        <button type="button" class="btn" onclick="saveProduct()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 8px 20px; font-weight: 600;">
+          <i class="bi bi-check-circle me-1"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let productsData = [];
+let filteredData = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let isLoading = false;
+let searchTimeout = null;
+const API_TIMEOUT = 10000;
+
+function initProductEditPage() {
+  console.log('Initializing Product Edit Page...');
+  setupEventListeners();
+  loadProducts();
+}
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchBox');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterProducts();
+      }, 600);
+    });
+  }
+}
+
+async function loadProducts() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('productsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading products...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const response = await fetch('/api/jiopay/product/list/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({}),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.list && data.list.length > 0) {
+      productsData = data.list;
+      filteredData = [...productsData];
+      renderTable();
+      showToast('Products loaded successfully', 'success');
+    } else {
+      productsData = [];
+      filteredData = [];
+      renderEmptyTable('No products available');
+    }
+
+  } catch (error) {
+    console.error('Error loading products:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load products. ' + error.message);
+      showToast('Failed to load products', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function filterProducts() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  if (!searchTerm) {
+    filteredData = [...productsData];
+  } else {
+    filteredData = productsData.filter(product => {
+      const productName = (product.product_name || '').toLowerCase();
+      const accountNumber = (product.account_number || '').toLowerCase();
+      const description = (product.description || '').toLowerCase();
+
+      return productName.includes(searchTerm) || 
+             accountNumber.includes(searchTerm) || 
+             description.includes(searchTerm);
+    });
+  }
+
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('productsTableBody');
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (paginatedData.length === 0) {
+    renderEmptyTable('No products match your search criteria');
+    return;
+  }
+
+  tbody.innerHTML = paginatedData.map((product, index) => {
+    const productName = product.product_name || '-';
+    const buyingPrice = product.buying_price || '0';
+    const sellingPrice = product.selling_price || '0';
+    const accountNumber = product.account_number || '-';
+    const quantity = product.quantity || '0';
+    const description = product.description || '-';
+    const status = product.status || 'active';
+
+    const profit = parseFloat(sellingPrice) - parseFloat(buyingPrice);
+    const profitColor = profit > 0 ? '#15803d' : profit < 0 ? '#b91c1c' : 'var(--muted)';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-box-seam me-2" style="color: var(--accent);"></i>${productName}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-rupee" style="color: var(--muted);"></i>${formatAmount(buyingPrice)}
+        </td>
+        <td style="padding: 16px 20px; text-align: right; color: var(--text); font-size: 0.875rem; font-weight: 600;">
+          <i class="bi bi-currency-rupee" style="color: var(--accent);"></i>${formatAmount(sellingPrice)}
+          <small class="d-block mt-1" style="color: ${profitColor}; font-size: 0.75rem;">
+            ${profit > 0 ? '+' : ''}${formatAmount(profit)} margin
+          </small>
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${accountNumber}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${quantity}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; color: var(--muted); font-size: 0.875rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${description}
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <span class="badge" style="background: ${status === 'active' ? '#dcfce7' : '#fee2e2'}; color: ${status === 'active' ? '#15803d' : '#b91c1c'}; border: 1px solid ${status === 'active' ? '#bbf7d0' : '#fecaca'}; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+            ${status === 'active' ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick='editProduct(${JSON.stringify(product)})' 
+            style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 12px;" 
+            title="Edit Product">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderEmptyTable(message = 'No products found') {
+  const tbody = document.getElementById('productsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-box-seam" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Products</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginationList = document.getElementById('paginationList');
+
+  if (totalPages <= 1) {
+    document.getElementById('paginationContainer').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('paginationContainer').style.display = 'flex';
+
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+  document.getElementById('showingStart').textContent = start;
+  document.getElementById('showingEnd').textContent = end;
+  document.getElementById('totalRecords').textContent = filteredData.length;
+
+  let paginationHTML = `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      paginationHTML += `
+        <li class="page-item ${currentPage === i ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;" 
+            style="border: 1px solid var(--stroke); ${currentPage === i ? 'background: var(--accent); color: var(--accent-ink); font-weight: 600;' : 'color: var(--text);'} border-radius: 8px; margin: 0 2px;">
+            ${i}
+          </a>
+        </li>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link" style="border: none;">...</span></li>`;
+    }
+  }
+
+  paginationHTML += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" 
+        style="border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; margin: 0 2px;">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  `;
+
+  paginationList.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function editProduct(product) {
+  document.getElementById('editProductId').value = product.id || '';
+  document.getElementById('editProductName').value = product.product_name || '';
+  document.getElementById('editAccountNumber').value = product.account_number || '';
+  document.getElementById('editBuyingPrice').value = product.buying_price || '';
+  document.getElementById('editSellingPrice').value = product.selling_price || '';
+  document.getElementById('editQuantity').value = product.quantity || '';
+  document.getElementById('editDescription').value = product.description || '';
+
+  const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+  modal.show();
+}
+
+async function saveProduct() {
+  const productId = document.getElementById('editProductId').value;
+  const productData = {
+    id: productId,
+    product_name: document.getElementById('editProductName').value,
+    account_number: document.getElementById('editAccountNumber').value,
+    buying_price: document.getElementById('editBuyingPrice').value,
+    selling_price: document.getElementById('editSellingPrice').value,
+    quantity: document.getElementById('editQuantity').value,
+    description: document.getElementById('editDescription').value
+  };
+
+  try {
+    const response = await fetch('/api/jiopay/product/update/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(productData)
+    });
+
+    const data = await response.json();
+
+    if (data.status === 1 || data.success === true) {
+      showToast('Product updated successfully', 'success');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+      modal.hide();
+      loadProducts();
+    } else {
+      showToast(data.message || 'Failed to update product', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating product:', error);
+    showToast('Failed to update product', 'error');
+  }
+}
+
+function formatAmount(amount) {
+  try {
+    return parseFloat(amount).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  } catch (e) {
+    return amount;
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('productsTable')) {
+    initProductEditPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#productsTable')) {
+    setTimeout(initProductEditPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(132, 195, 64, 0.1) !important;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.pagination .page-item.active .page-link {
+  border-color: var(--accent) !important;
+}
+
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+}
+</style>

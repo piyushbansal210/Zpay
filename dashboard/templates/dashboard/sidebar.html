@@ -195,6 +195,191 @@
           class="bi bi-cash"></i> Transaction</a>
     </div>
   </div>
+  <!-- =============== JIOPAY =============== -->
+  <!-- JIOPAY MAIN BUTTON -->
+  <button class="sb-btn" data-sb-toggle="#sb-jiopay" aria-expanded="true" hx-get="/dashboard/jiopay/"
+    hx-target="#content" hx-push-url="true">
+    <i class="bi bi-phone"></i><span>JioPay</span>
+    <i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+
+
+
+  <div id="sb-jiopay" class="sb-sub sb-group open">
+    <!-- Merchant -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-merchant" aria-expanded="false">
+      <i class="bi bi-person"></i><span>Merchant</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-jp-merchant" class="sb-sub">
+      <a class="sb-link" hx-get="/jiopay/merchant/add/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-person-plus"></i> Add Merchant</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/view/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-eye"></i> View Merchant</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/stats/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-graph-up"></i> All Merchant Stats</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/service/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-briefcase"></i> Merchant Service</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/session/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-laptop"></i> Active Session</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/currency/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-currency-dollar"></i> Active Currency</a>
+      <a class="sb-link" hx-get="/jiopay/merchant/bulksheets/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-file-earmark-spreadsheet"></i> All Bulk Sheets</a>
+    </div>
+
+    <!-- Payout -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payout" aria-expanded="false">
+      <i class="bi bi-credit-card"></i><span>Payout</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-jp-payout" class="sb-sub sb-group">
+      <a class="sb-link" hx-get="/jiopay/payout/dashboard/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-graph-up"></i> Dashboard</a>
+      <a class="sb-link" hx-get="/jiopay/payout/merchants/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-people-fill"></i> Payout Merchants</a>
+      <a class="sb-link" hx-get="/jiopay/payout/callback/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-arrow-repeat"></i> Callback Details</a>
+      <a class="sb-link" hx-get="/jiopay/payout/wallet/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-wallet2"></i> Wallet Requests</a>
+      <a class="sb-link" hx-get="/jiopay/payout/ticket/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-ticket-detailed"></i> Ticket Status</a>
+      <a class="sb-link" hx-get="/jiopay/payout/currency/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-currency-dollar"></i> Currency</a>
+
+      <!-- Payout → Transaction -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payout-txn" aria-expanded="false">
+        <span>Transaction</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-jp-payout-txn" class="sb-sub">
+        <a class="sb-link" hx-get="/jiopay/payout/payout_transaction/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-cash"></i> Payout Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_transaction_request_history/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-clock-history"></i> Request History</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_transaction_virtual/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-cash-stack"></i> Virtual Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_transaction_acquirer_report/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-file-earmark-bar-graph"></i> Acquirer Report</a>
+      </div>
+
+
+      <!-- Payout → Master Service -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payout-master" aria-expanded="false">
+        <span>Master Service</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-jp-payout-master" class="sb-sub">
+        <a class="sb-link" hx-get="/jiopay/payout/payout_master_add_account/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-person-plus"></i> Add Account</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_master_activate_account/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-bank"></i> Activate Account</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_master_bank_statements/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-bank2"></i> Download Bank Statements</a>
+        <a class="sb-link" hx-get="/jiopay/payout/payout_master_balance_list/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-list-check"></i> Bank Bal. List</a>
+      </div>
+
+      <!-- Payout → Bulk Activities -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payout-bulk" aria-expanded="false">
+        <span>Bulk Activities</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-jp-payout-bulk" class="sb-sub">
+        <a class="sb-link" hx-get="/jiopay/payout/payout_bulk_update/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-arrow-repeat"></i> Bulk Update</a>
+        <!-- <a class="sb-link" hx-get="/jiopay/payout/payout_bulk_txn_data/" hx-target="#content" hx-push-url="true"><i class="bi bi-database"></i> Txn Data</a> -->
+      </div>
+    </div>
+
+    <!-- Payin -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payin" aria-expanded="false">
+      <i class="bi bi-credit-card"></i><span>Payin</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-jp-payin" class="sb-sub sb-group">
+      <a class="sb-link" hx-get="/jiopay/payin/dashboard/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-graph-up"></i> Dashboard</a>
+      <!-- <a class="sb-link" hx-get="/jiopay/payin/method/" hx-target="#content" hx-push-url="true"><i class="bi bi-grid-3x3-gap"></i> Payin Method</a> -->
+      <a class="sb-link" hx-get="/jiopay/payin/merchants/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-people-fill"></i> Payin Merchants</a>
+      <a class="sb-link" hx-get="/jiopay/payin/request/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-list-check"></i> Payin Request</a>
+      <!-- <a class="sb-link" hx-get="/jiopay/payin/routing/" hx-target="#content" hx-push-url="true"><i class="bi bi-gear"></i> Test Routing</a> -->
+      <a class="sb-link" hx-get="/jiopay/payin/ticket/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-ticket-detailed"></i> Ticket Status</a>
+      <a class="sb-link" hx-get="/jiopay/payin/currency/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-currency-dollar"></i> Currency</a>
+      <a class="sb-link" hx-get="/jiopay/payin/callback_details/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-envelope"></i> Callback Details</a>
+      <!-- <a class="sb-link" hx-get="/jiopay/payin/callback_gen/" hx-target="#content" hx-push-url="true"><i class="bi bi-envelope-open"></i> Callback Gen.</a> -->
+
+      <!-- Payin → Transaction -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payin-txn" aria-expanded="false">
+        <span>Transaction</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-jp-payin-txn" class="sb-sub">
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-cash"></i> Payin Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_dispute/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-x-circle"></i> Dispute Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_chargeback/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-arrow-counterclockwise"></i> ChargeBack Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_flag/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-flag"></i> Flag Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_virtual/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-cash-stack"></i> Virtual Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_unmatched/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-slash"></i> Unmatched Txn</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_transaction_acquirer_report/" hx-target="#content"
+          hx-push-url="true"><i class="bi bi-file-earmark-bar-graph"></i> Acquirer Report</a>
+      </div>
+
+      <!-- Payin → Fuse -->
+      <!-- <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payin-fuse" aria-expanded="false">
+    <span>Fuse</span><i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+  <div id="sb-jp-payin-fuse" class="sb-sub">
+    <a class="sb-link" hx-get="/jiopay/payin/payin_fuse_fraud_list/" hx-target="#content" hx-push-url="true"><i class="bi bi-list"></i> Fraud List</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_fuse_fraud_upload/" hx-target="#content" hx-push-url="true"><i class="bi bi-database"></i> Fraud Upload</a>
+  </div> -->
+
+      <!-- Payin → Master Service -->
+      <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payin-master" aria-expanded="false">
+        <span>Master Service</span><i class="bi bi-chevron-right sb-arrow"></i>
+      </button>
+      <div id="sb-jp-payin-master" class="sb-sub">
+        <a class="sb-link" hx-get="/jiopay/payin/payin_master_add_mid/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-bank"></i> Add Mid</a>
+        <a class="sb-link" hx-get="/jiopay/payin/payin_master_activate_mid/" hx-target="#content" hx-push-url="true"><i
+            class="bi bi-check-circle"></i> Activate Mid</a>
+        <!-- <a class="sb-link" hx-get="/jiopay/payin/payin_master_upi_handler/" hx-target="#content" hx-push-url="true"><i class="bi bi-equal"></i> UPI Handler</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_master_gateway/" hx-target="#content" hx-push-url="true"><i class="bi bi-columns-gap"></i> Payin v Gateway</a> -->
+      </div>
+
+      <!-- Payin → Bulk Activities -->
+      <!-- <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-payin-bulk" aria-expanded="false">
+    <span>Bulk Activities</span><i class="bi bi-chevron-right sb-arrow"></i>
+  </button>
+  <div id="sb-jp-payin-bulk" class="sb-sub">
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_dispute/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Dispute Txn</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_update/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Update Txn</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_chargeback/" hx-target="#content" hx-push-url="true"><i class="bi bi-pencil-square"></i> Bulk Chargeback</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_bank_txn/" hx-target="#content" hx-push-url="true"><i class="bi bi-bank"></i> Get Bank Txn</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_get_request/" hx-target="#content" hx-push-url="true"><i class="bi bi-clipboard-check"></i> Get Payin Request</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_resend_callback/" hx-target="#content" hx-push-url="true"><i class="bi bi-envelope"></i> Resend Callback</a>
+    <a class="sb-link" hx-get="/jiopay/payin/payin_bulk_resend_bank_callback/" hx-target="#content" hx-push-url="true"><i class="bi bi-arrow-right"></i> Resend Bank Callback</a>
+  </div> -->
+    </div>
+
+
+    <!-- Product -->
+    <button class="sb-btn is-sub" data-sb-toggle="#sb-jp-product" aria-expanded="false">
+      <i class="bi bi-box"></i><span>Product</span><i class="bi bi-chevron-right sb-arrow"></i>
+    </button>
+    <div id="sb-jp-product" class="sb-sub">
+      <a class="sb-link" hx-get="/jiopay/product/edit/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-pencil-square"></i> Edit Product</a>
+      <a class="sb-link" hx-get="/jiopay/product/query/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-search"></i> Query</a>
+      <a class="sb-link" hx-get="/jiopay/product/transaction/" hx-target="#content" hx-push-url="true"><i
+          class="bi bi-cash"></i> Transaction</a>
+    </div>
+  </div>
 
   <!-- =============== RAZORPAY (placeholder) =============== -->
   <button class="sb-btn" data-sb-toggle="#sb-razorpay" aria-expanded="false">

@@ -1,8 +1,22 @@
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'dev-secret-key'
-DEBUG = True
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# Easebuzz Settings
+EASEBUZZ_KEY = os.getenv('EASEBUZZ_KEY')
+EASEBUZZ_SALT = os.getenv('EASEBUZZ_SALT')
+EASEBUZZ_ENV = os.getenv('EASEBUZZ_ENV', 'test')
+
+# JioPay Settings
+JIOPAY_KEY = os.getenv('JIOPAY_KEY')
+JIOPAY_SALT = os.getenv('JIOPAY_SALT')
+JIOPAY_ENV = os.getenv('JIOPAY_ENV', 'test')
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
@@ -14,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'dashboard',
     'easebuzz',
+    'jiopay',
     'drf_yasg',
     'rest_framework',
 ]

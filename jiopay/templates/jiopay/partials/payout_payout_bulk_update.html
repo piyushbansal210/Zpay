@@ -1,0 +1,573 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Bulk Update Transaction
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Upload CSV file to update multiple transactions at once</p>
+    </div>
+    <button id="downloadSampleBtn" class="btn" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-download me-1"></i> Download Sample
+    </button>
+  </div>
+
+  <!-- Instructions Card
+  <div class="card border-0 rounded-4 mb-4" style="background: #e0f2fe; border: 1px solid #bae6fd !important;">
+    <div class="card-body" style="padding: 20px;">
+      <div class="d-flex align-items-start">
+        <div style="background: #0369a1; border-radius: 8px; padding: 8px; margin-right: 12px;">
+          <i class="bi bi-info-circle" style="color: white; font-size: 1.2rem;"></i>
+        </div>
+        <div>
+          <h6 class="mb-2" style="color: #0369a1; font-weight: 600;">Instructions</h6>
+          <ul class="mb-0" style="color: #0369a1; font-size: 0.875rem; padding-left: 20px;">
+            <li>Download the sample CSV file to see the required format</li>
+            <li>Fill in your transaction data following the same column structure</li>
+            <li>Supported file format: CSV only (Maximum size: 10MB)</li>
+            <li>Ensure all required fields are filled before uploading</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- Upload Card -->
+  <div class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 30px;">
+      
+      <!-- Drag and Drop Area -->
+      <div id="dropArea" 
+        class="border border-2 border-dashed rounded-4 text-center position-relative" 
+        style="border-color: var(--accent) !important; background: var(--page); padding: 60px 20px; cursor: pointer; transition: all 0.3s ease;">
+        
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+        
+        <div id="uploadPrompt">
+          <div style="background: var(--accent); background: linear-gradient(135deg, var(--accent) 0%, #6da832 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <i class="bi bi-cloud-upload" style="font-size: 2.5rem; color: var(--accent-ink);"></i>
+          </div>
+          <h5 class="mb-2" style="color: var(--text); font-weight: 600;">Drop your CSV file here</h5>
+          <p class="text-muted mb-3" style="font-size: 0.875rem;">or click to browse from your computer</p>
+          <button type="button" class="btn" onclick="document.getElementById('fileInput').click()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 24px; font-weight: 600;">
+            <i class="bi bi-folder2-open me-2"></i>Browse Files
+          </button>
+          <p class="text-muted mt-3 mb-0" style="font-size: 0.75rem;">Supported: CSV, XLSX, XLS • Max size: 10MB</p>
+        </div>
+
+        <div id="filePreview" style="display: none;">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div style="background: #dcfce7; border-radius: 12px; padding: 16px; margin-right: 16px;">
+              <i class="bi bi-file-earmark-spreadsheet" style="font-size: 2.5rem; color: #15803d;"></i>
+            </div>
+            <div class="text-start">
+              <h6 class="mb-1" style="color: var(--text); font-weight: 600;" id="fileName">filename.csv</h6>
+              <p class="text-muted mb-0" style="font-size: 0.875rem;" id="fileSize">0 KB</p>
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-sm" onclick="removeFile()" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+              <i class="bi bi-x-circle me-1"></i>Remove
+            </button>
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('fileInput').click()" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+              <i class="bi bi-arrow-repeat me-1"></i>Change File
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progressContainer" class="mt-4" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span style="color: var(--text); font-size: 0.875rem; font-weight: 600;">Uploading...</span>
+          <span style="color: var(--muted); font-size: 0.875rem;" id="progressPercent">0%</span>
+        </div>
+        <div class="progress" style="height: 8px; background: var(--page); border-radius: 10px;">
+          <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+            role="progressbar" 
+            style="width: 0%; background: var(--accent);"
+            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="uploadStatus" class="mt-4"></div>
+
+      <!-- Upload Button -->
+      <div class="text-center mt-4">
+        <button id="uploadBtn" class="btn" disabled style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 12px 40px; font-weight: 600; font-size: 1rem;">
+          <i class="bi bi-upload me-2"></i>Upload & Process
+        </button>
+      </div>
+
+      <!-- Recent Uploads -->
+      <div id="recentUploads" class="mt-5" style="display: none;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h6 class="mb-0" style="color: var(--text); font-weight: 600;">
+            <i class="bi bi-clock-history me-2" style="color: var(--accent);"></i>Recent Uploads
+          </h6>
+          <button class="btn btn-sm" onclick="clearHistory()" style="background: var(--page); border: 1px solid var(--stroke); color: var(--text); border-radius: 8px; padding: 4px 12px;">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+        <div id="uploadHistory"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedFile = null;
+let uploadHistory = [];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+function initBulkUpdatePage() {
+  console.log('Initializing Bulk Update Page...');
+  setupEventListeners();
+  loadUploadHistory();
+}
+
+function setupEventListeners() {
+  const dropArea = document.getElementById('dropArea');
+  const fileInput = document.getElementById('fileInput');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const downloadSampleBtn = document.getElementById('downloadSampleBtn');
+
+  // Prevent default drag behaviors
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+  });
+
+  // Highlight drop area when item is dragged over it
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => {
+      dropArea.style.borderColor = '#6da832';
+      dropArea.style.background = '#f0f9eb';
+      dropArea.style.transform = 'scale(1.02)';
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => {
+      dropArea.style.borderColor = 'var(--accent)';
+      dropArea.style.background = 'var(--page)';
+      dropArea.style.transform = 'scale(1)';
+    }, false);
+  });
+
+  // Handle dropped files
+  dropArea.addEventListener('drop', handleDrop, false);
+
+  // Handle click to upload
+  dropArea.addEventListener('click', (e) => {
+    if (e.target.id !== 'uploadBtn' && !e.target.closest('button')) {
+      fileInput.click();
+    }
+  });
+
+  // Handle file input change
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  });
+
+  // Upload button
+  if (uploadBtn) {
+    uploadBtn.addEventListener('click', uploadFile);
+  }
+
+  // Download sample button
+  if (downloadSampleBtn) {
+    downloadSampleBtn.addEventListener('click', downloadSample);
+  }
+}
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles(files);
+}
+
+function handleFiles(files) {
+  if (files.length === 0) return;
+
+  const file = files[0];
+  
+  // Validate file type
+  const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+  const validExtensions = ['.csv', '.xlsx', '.xls'];
+  const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+  
+  if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+    showToast('Please upload a valid CSV or Excel file', 'error');
+    return;
+  }
+
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    showToast('File size exceeds 10MB limit', 'error');
+    return;
+  }
+
+  selectedFile = file;
+  displayFilePreview(file);
+  document.getElementById('uploadBtn').disabled = false;
+}
+
+function displayFilePreview(file) {
+  const uploadPrompt = document.getElementById('uploadPrompt');
+  const filePreview = document.getElementById('filePreview');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+
+  uploadPrompt.style.display = 'none';
+  filePreview.style.display = 'block';
+
+  fileName.textContent = file.name;
+  fileSize.textContent = formatFileSize(file.size);
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('uploadPrompt').style.display = 'block';
+  document.getElementById('filePreview').style.display = 'none';
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadStatus').innerHTML = '';
+  document.getElementById('progressContainer').style.display = 'none';
+}
+
+async function uploadFile() {
+  if (!selectedFile) {
+    showToast('Please select a file first', 'error');
+    return;
+  }
+
+  const uploadBtn = document.getElementById('uploadBtn');
+  const progressContainer = document.getElementById('progressContainer');
+  const uploadProgress = document.getElementById('uploadProgress');
+  const progressPercent = document.getElementById('progressPercent');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  // Disable upload button
+  uploadBtn.disabled = true;
+  uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+
+  // Show progress bar
+  progressContainer.style.display = 'block';
+  uploadStatus.innerHTML = '';
+
+  // Create FormData
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    // Simulate progress (since we can't track actual upload progress easily)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 10;
+      if (progress <= 90) {
+        uploadProgress.style.width = progress + '%';
+        progressPercent.textContent = progress + '%';
+      }
+    }, 200);
+
+    const response = await fetch('/api/payout/bulk_update_transaction/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: formData
+    });
+
+    clearInterval(progressInterval);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Complete progress
+    uploadProgress.style.width = '100%';
+    progressPercent.textContent = '100%';
+
+    if (data.status === 1 || data.success === true) {
+      // Success
+      uploadStatus.innerHTML = `
+        <div class="alert alert-success" style="border-radius: 10px; border: none; background: #dcfce7; color: #15803d;">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-check-circle-fill me-3" style="font-size: 1.5rem;"></i>
+            <div>
+              <h6 class="mb-1" style="font-weight: 600;">Upload Successful!</h6>
+              <p class="mb-0" style="font-size: 0.875rem;">${data.message || 'File uploaded and processed successfully'}</p>
+              ${data.processed_count ? `<small class="d-block mt-1">Processed ${data.processed_count} records</small>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Add to history
+      addToHistory({
+        fileName: selectedFile.name,
+        status: 'success',
+        message: data.message || 'Upload successful',
+        timestamp: new Date().toISOString(),
+        processedCount: data.processed_count || 0
+      });
+
+      showToast('File uploaded successfully!', 'success');
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        removeFile();
+        progressContainer.style.display = 'none';
+      }, 3000);
+
+    } else {
+      // Error from server
+      throw new Error(data.message || 'Upload failed');
+    }
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    uploadProgress.style.width = '100%';
+    uploadProgress.classList.remove('progress-bar-animated');
+    uploadProgress.style.background = '#b91c1c';
+
+    uploadStatus.innerHTML = `
+      <div class="alert alert-danger" style="border-radius: 10px; border: none; background: #fee2e2; color: #b91c1c;">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-x-circle-fill me-3" style="font-size: 1.5rem;"></i>
+          <div>
+            <h6 class="mb-1" style="font-weight: 600;">Upload Failed</h6>
+            <p class="mb-0" style="font-size: 0.875rem;">${error.message}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add to history
+    addToHistory({
+      fileName: selectedFile.name,
+      status: 'failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+
+    showToast('Upload failed: ' + error.message, 'error');
+
+  } finally {
+    // Re-enable upload button
+    uploadBtn.disabled = false;
+    uploadBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Upload & Process';
+  }
+}
+
+function downloadSample() {
+  showToast('Downloading sample file...', 'info');
+  
+  // Create sample CSV content
+  const sampleContent = 'transaction_id,status,amount,remarks\n' +
+                       'TXN001,success,1000.00,Payment received\n' +
+                       'TXN002,failed,500.00,Insufficient balance\n' +
+                       'TXN003,pending,750.00,Under review';
+
+  const blob = new Blob([sampleContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bulk_update_sample.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+
+  showToast('Sample file downloaded', 'success');
+}
+
+function addToHistory(item) {
+  uploadHistory.unshift(item);
+  if (uploadHistory.length > 5) {
+    uploadHistory = uploadHistory.slice(0, 5);
+  }
+  saveUploadHistory();
+  displayUploadHistory();
+}
+
+function saveUploadHistory() {
+  try {
+    localStorage.setItem('bulkUploadHistory', JSON.stringify(uploadHistory));
+  } catch (e) {
+    console.error('Failed to save history:', e);
+  }
+}
+
+function loadUploadHistory() {
+  try {
+    const stored = localStorage.getItem('bulkUploadHistory');
+    if (stored) {
+      uploadHistory = JSON.parse(stored);
+      displayUploadHistory();
+    }
+  } catch (e) {
+    console.error('Failed to load history:', e);
+  }
+}
+
+function displayUploadHistory() {
+  if (uploadHistory.length === 0) {
+    document.getElementById('recentUploads').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('recentUploads').style.display = 'block';
+  const historyContainer = document.getElementById('uploadHistory');
+
+  historyContainer.innerHTML = uploadHistory.map(item => {
+    const statusColor = item.status === 'success' ? '#15803d' : '#b91c1c';
+    const statusBg = item.status === 'success' ? '#dcfce7' : '#fee2e2';
+    const statusIcon = item.status === 'success' ? 'check-circle-fill' : 'x-circle-fill';
+
+    return `
+      <div class="d-flex align-items-center justify-content-between p-3 mb-2 rounded-3" style="background: var(--page); border: 1px solid var(--stroke);">
+        <div class="d-flex align-items-center">
+          <div style="background: ${statusBg}; border-radius: 8px; padding: 8px; margin-right: 12px;">
+            <i class="bi ${statusIcon}" style="color: ${statusColor}; font-size: 1.2rem;"></i>
+          </div>
+          <div>
+            <h6 class="mb-1" style="color: var(--text); font-size: 0.875rem; font-weight: 600;">${item.fileName}</h6>
+            <p class="mb-0 text-muted" style="font-size: 0.75rem;">${item.message}</p>
+            ${item.processedCount ? `<small class="text-muted">${item.processedCount} records processed</small>` : ''}
+          </div>
+        </div>
+        <small class="text-muted" style="font-size: 0.75rem;">${formatTimestamp(item.timestamp)}</small>
+      </div>
+    `;
+  }).join('');
+}
+
+function clearHistory() {
+  if (confirm('Are you sure you want to clear upload history?')) {
+    uploadHistory = [];
+    saveUploadHistory();
+    displayUploadHistory();
+    showToast('History cleared', 'success');
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('dropArea')) {
+    initBulkUpdatePage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#dropArea')) {
+    setTimeout(initBulkUpdatePage, 50);
+  }
+});
+</script>
+
+<style>
+#dropArea {
+  transition: all 0.3s ease;
+}
+
+#dropArea:hover {
+  border-color: #6da832 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(132, 195, 64, 0.15);
+}
+
+.progress-bar {
+  transition: width 0.3s ease;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.alert {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

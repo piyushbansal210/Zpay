@@ -46,6 +46,14 @@ class Merchant(models.Model):
     # Provider information
     provider = models.CharField(max_length=100, default="easebuzz")
     
+    # Easebuzz API Keys
+    easebuzz_key = models.CharField(max_length=255, blank=True, null=True)
+    easebuzz_salt = models.CharField(max_length=255, blank=True, null=True)
+    
+    # JioPay API Keys
+    jiopay_key = models.CharField(max_length=255, blank=True, null=True)
+    jiopay_salt = models.CharField(max_length=255, blank=True, null=True)
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

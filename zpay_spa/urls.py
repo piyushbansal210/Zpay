@@ -34,6 +34,7 @@ urlpatterns = [
     
     # Easebuzz routes
     path('easebuzz/', include('easebuzz.urls')),
+    path('jiopay/', include('jiopay.urls')),
     
     # API routes
     path('api/', include('apis.urls')),

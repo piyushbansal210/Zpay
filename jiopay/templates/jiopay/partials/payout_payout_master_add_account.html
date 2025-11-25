@@ -1,0 +1,264 @@
+{% load static %}
+<div class="page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-semibold mb-1" style="color: var(--text);">
+        Add Account
+      </h3>
+      <p class="text-muted mb-0" style="font-size: 0.9rem;">Add and activate new bank accounts for payout processing</p>
+    </div>
+    <button id="refreshBtn" class="btn" onclick="loadAccounts()" style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Accounts Table -->
+  <div id="accountsTable" class="card border-0 rounded-4" style="background: var(--bg); border: 1px solid var(--stroke) !important; box-shadow: var(--shadow);">
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+          <thead style="background: var(--page); border-bottom: 2px solid var(--stroke);">
+            <tr>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; border-top-left-radius: 14px;">Bank No.</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Bank Name</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none;">Currency</th>
+              <th style="padding: 16px 20px; color: var(--text); font-weight: 600; font-size: 0.875rem; border: none; text-align: center; border-top-right-radius: 14px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="accountsTableBody">
+            <tr>
+              <td colspan="4" class="text-center py-5">
+                <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted mb-0">Loading accounts...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let accountsData = [];
+let isLoading = false;
+const API_TIMEOUT = 10000;
+
+function initAddAccountPage() {
+  console.log('Initializing Add Account Page...');
+  loadAccounts();
+}
+
+async function loadAccounts() {
+  if (isLoading) return;
+
+  isLoading = true;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  const originalBtnHtml = refreshBtn.innerHTML;
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+  const tbody = document.getElementById('accountsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center py-5">
+        <div class="spinner-border" style="width: 2rem; height: 2rem; color: var(--accent);" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted mb-0">Loading accounts...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    const response = await fetch('/api/payout/add_account/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 1 && data.accounts && data.accounts.length > 0) {
+      accountsData = data.accounts;
+      renderTable();
+      showToast('Accounts loaded successfully', 'success');
+    } else {
+      accountsData = [];
+      renderEmptyTable(data.message || 'No accounts found');
+    }
+
+  } catch (error) {
+    console.error('Error loading accounts:', error);
+    if (error.name === 'AbortError') {
+      renderEmptyTable('Request timeout - please try again');
+      showToast('Request timeout', 'error');
+    } else {
+      renderEmptyTable('Unable to load accounts. ' + error.message);
+      // showToast('Failed to load accounts', 'error');
+    }
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalBtnHtml;
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('accountsTableBody');
+
+  tbody.innerHTML = accountsData.map((account) => {
+    const bankNo = account.bank_no || account.bankNo || '-';
+    const bankName = account.bank_name || account.bankName || '-';
+    const currency = account.currency || 'INR';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--stroke);">
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem; font-family: monospace; font-weight: 600;">
+          ${bankNo}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <i class="bi bi-bank me-2" style="color: var(--accent);"></i>${bankName}
+        </td>
+        <td style="padding: 16px 20px; color: var(--text); font-size: 0.875rem;">
+          <span style="background: var(--page); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--stroke); font-weight: 600;">
+            ${currency}
+          </span>
+        </td>
+        <td style="padding: 16px 20px; text-align: center;">
+          <button class="btn btn-sm" onclick="activateAccount('${bankNo}', '${bankName}')" 
+            style="background: var(--accent); border: none; color: var(--accent-ink); border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+            <i class="bi bi-check-circle me-1"></i>Activate
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderEmptyTable(message = 'No accounts found') {
+  const tbody = document.getElementById('accountsTableBody');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center py-5">
+        <div style="color: var(--muted);">
+          <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3 mb-2 fw-semibold" style="color: var(--text);">No Accounts</p>
+          <p class="mb-0" style="font-size: 0.875rem;">${message}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+async function activateAccount(bankNo, bankName) {
+  if (!confirm(`Are you sure you want to activate account ${bankNo} - ${bankName}?`)) {
+    return;
+  }
+
+  showToast('Activating account...', 'info');
+
+  try {
+    const response = await fetch('/api/payout/activate_account/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ bank_no: bankNo })
+    });
+
+    const data = await response.json();
+
+    if (data.status === 1) {
+      showToast(`Account ${bankNo} activated successfully`, 'success');
+      loadAccounts();
+    } else {
+      // showToast(data.message || 'Failed to activate account', 'error');
+    }
+  } catch (error) {
+    console.error('Error activating account:', error);
+    // showToast('Failed to activate account', 'error');
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed top-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: var(--shadow);">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} me-2"></i>${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('accountsTable')) {
+    initAddAccountPage();
+  }
+});
+
+document.body.addEventListener('htmx:afterSettle', function(event) {
+  if (event.detail.target && event.detail.target.querySelector('#accountsTable')) {
+    setTimeout(initAddAccountPage, 50);
+  }
+});
+
+document.body.addEventListener('htmx:beforeSwap', function(event) {
+  isLoading = false;
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+  background: var(--page);
+  transition: background 0.2s ease;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+</style>

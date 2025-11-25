@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.conf import settings
 import json
 
 from easebuzz.models import Merchant, ChatMessage
@@ -318,7 +319,7 @@ def merchant_transactions_view(request):
     # For now, we'll show a placeholder or empty list
     # We would need to:
     # 1. Get sub_merchant_key for this merchant (possibly by calling merchant_list API)
-    # 2. Call transaction_report API with that key
+    # 2. Call transaction_report API with that key using settings.EASEBUZZ_KEY and settings.EASEBUZZ_SALT
     
     transactions = []
     
